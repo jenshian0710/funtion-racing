@@ -12,22 +12,22 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
         :root {
-            --bg-dark: #07080c;
-            --panel-bg: #11131c;
-            --left-color: #a3e635; /* Lime 400 */
-            --left-glow: rgba(163, 230, 53, 0.35);
-            --right-color: #c084fc; /* Purple 400 */
-            --right-glow: rgba(192, 132, 252, 0.35);
+            --bg-dark: #050608;
+            --panel-bg: #0f111a;
+            --left-color: #a3e635;  /* 原影片亮萊姆綠 */
+            --left-glow: rgba(163, 230, 53, 0.45);
+            --right-color: #c084fc; /* 原影片柔光紫 */
+            --right-glow: rgba(192, 132, 252, 0.45);
         }
 
         body {
             background-color: var(--bg-dark);
             color: #f3f4f6;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .font-mono-num {
@@ -35,7 +35,36 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* Custom Scrollbar */
+        .glow-left {
+            text-shadow: 0 0 18px var(--left-glow);
+        }
+        .glow-right {
+            text-shadow: 0 0 18px var(--right-glow);
+        }
+
+        /* KaTeX 數學公式字體自適應 */
+        .math-display .katex {
+            font-size: clamp(1.75rem, 3.2vh, 2.75rem) !important;
+        }
+
+        /* 針對直式 9:16 擬真展示框的樣式 */
+        .portrait-frame {
+            aspect-ratio: 9 / 16;
+            height: 100%;
+            max-height: 100%;
+            width: auto;
+            margin: 0 auto;
+            border-left: 1px solid rgba(51, 65, 85, 0.6);
+            border-right: 1px solid rgba(51, 65, 85, 0.6);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            background-color: #030305;
+        }
+
+        input[type=range] {
+            accent-color: #6366f1;
+        }
+
+        /* 自訂捲軸 */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -47,428 +76,611 @@
             background: #2e3244;
             border-radius: 3px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4b526d;
-        }
-
-        .glow-left {
-            text-shadow: 0 0 18px var(--left-glow);
-        }
-        .glow-right {
-            text-shadow: 0 0 18px var(--right-glow);
-        }
-        .box-glow-left {
-            box-shadow: 0 0 20px var(--left-glow), inset 0 0 12px var(--left-glow);
-        }
-        .box-glow-right {
-            box-shadow: 0 0 20px var(--right-glow), inset 0 0 12px var(--right-glow);
-        }
-
-        /* KaTeX Font Size Adjustments */
-        .math-display .katex {
-            font-size: 2.6rem !important;
-        }
-        @media (max-width: 640px) {
-            .math-display .katex {
-                font-size: 2rem !important;
-            }
-        }
-        
-        /* Custom Range Slider */
-        input[type=range] {
-            accent-color: #6366f1;
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between select-none">
+<body id="appRoot" class="h-screen w-screen flex flex-col justify-between select-none bg-[#050608]">
 
-    <!-- 頂部作者與標題列 -->
-    <header class="w-full bg-[#0d0f17]/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 px-4 py-2.5">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-3">
-                <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs sm:text-sm font-semibold tracking-wide flex items-center gap-1.5 shadow-sm">
-                    <i class="ph-fill ph-chalkboard-teacher text-base"></i>
+    <!-- 1. 頂部標題與快速導覽列 -->
+    <header class="w-full bg-[#0b0d14]/95 border-b border-slate-800/80 px-3 sm:px-5 py-1.5 shrink-0 z-30">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2">
+            <!-- 左側：設計者與影片出處 -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-semibold flex items-center gap-1.5">
+                    <i class="ph-fill ph-chalkboard-teacher text-sm"></i>
                     設計者：林口國中李政憲老師
                 </span>
-                <a href="https://www.facebook.com/reel/1431923925027945" target="_blank" class="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-xs sm:text-sm font-semibold tracking-wide hover:bg-blue-500/30 transition flex items-center gap-1.5 shadow-sm">
-                    <i class="ph-fill ph-video-camera text-base"></i>
+                <a href="https://www.facebook.com/reel/1431923925027945" target="_blank" rel="noopener noreferrer" class="px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-xs font-semibold hover:bg-blue-500/30 transition flex items-center gap-1">
+                    <i class="ph-fill ph-video-camera text-sm"></i>
                     原始影片出處
                 </a>
-                <div class="hidden md:flex items-center gap-2 text-xs text-slate-400">
-                    <span>FUNCTION RACE</span>
-                    <span>•</span>
-                    <span>數學數列成長視覺化實驗室</span>
-                </div>
             </div>
 
-            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                <span>Which one wins?</span>
-                <span class="text-xs font-normal text-slate-400 hidden sm:inline">誰會先抵達終點？</span>
-            </h1>
-
-            <!-- 快速開啟設定與數據抽屜 -->
+            <!-- 中央：主標題 -->
             <div class="flex items-center gap-2">
-                <button id="btnToggleSettings" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition flex items-center gap-1.5">
-                    <i class="ph ph-Sliders text-base text-indigo-400"></i>
+                <span class="text-[10px] font-mono-num uppercase tracking-[0.2em] text-slate-400 hidden lg:inline">FUNCTION RACE</span>
+                <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white">
+                    Which one wins?
+                </h1>
+            </div>
+
+            <!-- 右側：功能面板按鈕 -->
+            <div class="flex items-center gap-1.5">
+                <button id="btnToggleIntro" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 transition flex items-center gap-1" title="開啟賽前規則導覽與雙模式機制動畫比較">
+                    <i class="ph-fill ph-compass text-sm"></i>
+                    <span>賽前導覽與預測提示</span>
+                </button>
+                <button id="btnToggleSettings" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1">
+                    <i class="ph ph-sliders text-sm text-indigo-400"></i>
                     <span>函數與關卡設定</span>
                 </button>
-                <button id="btnToggleTable" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition flex items-center gap-1.5">
-                    <i class="ph ph-table text-base text-emerald-400"></i>
-                    <span>數據對照表</span>
+                <button id="btnToggleTable" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1">
+                    <i class="ph ph-table text-sm text-emerald-400"></i>
+                    <span class="hidden sm:inline">數據表</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 教學控制列 (永遠顯示，方便課堂操作) -->
-    <section class="w-full bg-[#11131c] border-b border-slate-800/80 px-4 py-2.5 z-20">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <!-- 左側：播放控制 -->
-            <div class="flex items-center gap-2">
-                <button id="btnPlayPause" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/30">
-                    <i id="iconPlayPause" class="ph-fill ph-play text-base"></i>
+    <!-- 2. 次級教學控制列 (零劇透選單 + 動態黃金交叉偵測 + 學生預測投票) -->
+    <section class="w-full bg-[#10131d] border-b border-slate-800/80 px-3 sm:px-5 py-1.5 shrink-0 z-20">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+            <!-- 播放與重置 -->
+            <div class="flex items-center gap-1.5">
+                <button id="btnPlayPause" class="px-3.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition flex items-center gap-1 shadow">
+                    <i id="iconPlayPause" class="ph-fill ph-play text-sm"></i>
                     <span id="textPlayPause">開始競賽</span>
                 </button>
-                <button id="btnReset" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm border border-slate-700 transition flex items-center gap-1.5">
-                    <i class="ph ph-arrow-counter-clockwise text-base"></i>
+                <button id="btnReset" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium border border-slate-700 transition flex items-center gap-1">
+                    <i class="ph ph-arrow-counter-clockwise text-sm"></i>
                     <span>重置</span>
                 </button>
-                <button id="btnMute" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="切換音效">
-                    <i id="iconMute" class="ph-fill ph-speaker-high text-base text-amber-400"></i>
+                <button id="btnMute" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="切換音效">
+                    <i id="iconMute" class="ph-fill ph-speaker-high text-sm text-amber-400"></i>
                 </button>
+                <!-- 模擬計時器 -->
+                <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 font-mono-num text-slate-300 flex items-center gap-1" title="模擬經過時間">
+                    <i class="ph ph-timer text-indigo-400 text-sm"></i>
+                    <span id="simTimerText">00:00.0</span>
+                </div>
             </div>
 
-            <!-- 中間：速度與規則切換 -->
-            <div class="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
-                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">模擬速度:</span>
-                    <input id="speedSlider" type="range" min="0.5" max="10" step="0.5" value="1" class="w-20 sm:w-28 cursor-pointer">
-                    <span id="speedValue" class="font-mono-num font-semibold text-indigo-400 w-10 text-right">1.0x</span>
+            <!-- 速度、邏輯模式(不劇透贏家)與動態黃金交叉暫停點 -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <div class="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-800">
+                    <span class="text-slate-400">速度:</span>
+                    <input id="speedSlider" type="range" min="0.5" max="10" step="0.5" value="1" class="w-16 sm:w-20 cursor-pointer">
+                    <span id="speedValue" class="font-mono-num font-bold text-indigo-400 w-9 text-right">1.0x</span>
                 </div>
 
-                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1 rounded-lg border border-slate-800">
-                    <span class="text-slate-400 text-xs sm:text-sm">模擬機制:</span>
-                    <select id="simEngineSelect" class="bg-slate-800 text-white text-xs sm:text-sm rounded border border-slate-700 outline-none p-1">
-                        <option value="math">純數學離散運算 (網頁邏輯)</option>
-                        <option value="physics" selected>連續物理模擬 (原影片邏輯)</option>
+                <div class="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 hidden md:inline">競賽模式:</span>
+                    <select id="simEngineSelect" class="bg-slate-800 text-amber-300 font-semibold text-xs rounded border border-slate-700 outline-none px-1.5 py-0.5 cursor-pointer">
+                        <option value="video" selected>🎬 模式一：原影片物理時序 (雙邊依球體距離獨立發射)</option>
+                        <option value="math">📐 模式二：純數學同步回合制 (雙邊嚴格 1:1 同時發射)</option>
                     </select>
                 </div>
 
-                <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition" title="當 n=12 時 (F_12 = 144 且 12^2 = 144)，自動暫停比賽方便課堂提問">
-                    <input id="chkGoldenCross" type="checkbox" class="rounded text-indigo-500 focus:ring-0 bg-slate-800 border-slate-600">
-                    <span class="text-amber-300 font-medium flex items-center gap-1">
-                        <i class="ph-fill ph-sparkle"></i>
-                        n=12 黃金交叉暫停
-                    </span>
+                <!-- 動態偵測黃金交叉勾選框 -->
+                <label id="goldenCrossLabelWrapper" class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 transition" title="自動偵測「前期落後方的單波產出首次追平或反超領先方」的回合並自動暫停">
+                    <input id="chkGoldenCross" type="checkbox" checked class="rounded text-indigo-500 focus:ring-0 bg-slate-800 border-slate-600">
+                    <span id="goldenCrossLabelText" class="text-amber-300 font-medium">黃金交叉 (n=12 追平) 暫停</span>
                 </label>
+            </div>
 
-                <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition" title="原影片規則：破關時 n 才會 +1；若單波沒破關，則維持當前的 n 持續發射直到破關。取消勾選則為每發射一波固定 n+1。">
-                    <input id="chkAdvanceOnClear" type="checkbox" checked class="rounded text-indigo-500 focus:ring-0 bg-slate-800 border-slate-600">
-                    <span class="text-slate-300">過關才推進 n (原影片邏輯)</span>
-                </label>
+            <!-- 螢幕比例與全螢幕切換 -->
+            <div class="flex items-center gap-1.5">
+                <button id="btnAspectToggle" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1" title="切換「橫式寬螢幕滿版」或「直式 9:16 原影片比例」">
+                    <i id="iconAspect" class="ph ph-device-mobile text-sm text-cyan-400"></i>
+                    <span id="textAspect">切換直式 9:16</span>
+                </button>
+                <button id="btnFullscreen" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 font-semibold transition flex items-center gap-1" title="全螢幕播放 (支援鍵盤 Esc 退出)">
+                    <i id="iconFullscreen" class="ph-bold ph-corners-out text-sm"></i>
+                    <span id="textFullscreen">全螢幕</span>
+                </button>
             </div>
         </div>
     </section>
 
-    <!-- 可收合的「函數與關卡設定」面板 -->
-    <section id="settingsPanel" class="hidden w-full bg-[#151824] border-b border-slate-700/80 px-4 py-4 z-20 transition-all">
-        <div class="max-w-7xl mx-auto space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- 左賽道設定 -->
-                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-lime-500/30 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-bold text-lime-400 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-lime-400 inline-block"></span>
-                            左賽道函數設定 (Left Track)
-                        </span>
-                        <select id="leftModeSelect" class="bg-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-1 border border-slate-700">
-                            <option value="balls" selected>數量模式 (More balls: V(n)顆球, 威力=1)</option>
-                            <option value="power">威力模式 (More power: 1顆球, 威力=V(n))</option>
-                        </select>
+    <!-- 3. 教學提示橫幅 (當觸發動態黃金交叉時顯示，引導學生猜測最終結果) -->
+    <div id="teachingBanner" class="hidden w-full bg-amber-500/20 border-b border-amber-400/50 px-4 py-1.5 text-center shrink-0 z-20">
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-3">
+            <span class="text-amber-200 text-xs sm:text-sm font-semibold flex items-center gap-1.5">
+                <i class="ph-fill ph-lightbulb text-base text-amber-400 shrink-0"></i>
+                <span id="teachingBannerText">課堂觀察點：單波產出已發生黃金交叉！請學生預測誰會先抵達終點？</span>
+            </span>
+            <button id="btnResumeFromBanner" class="px-3 py-0.5 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow">
+                預測完畢，繼續揭曉！
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. 主競賽舞台外框 -->
+    <main class="flex-1 w-full overflow-hidden flex items-center justify-center p-1 sm:p-2 bg-[#050608]">
+        <div id="stageWrapper" class="w-full max-w-6xl h-full flex flex-col bg-[#030305] rounded-xl border border-slate-800/80 overflow-hidden shadow-2xl">
+            
+            <!-- 頂部：雙欄數學公式與即時儀表板 -->
+            <div class="w-full grid grid-cols-2 border-b border-slate-800/90 py-2 sm:py-3 px-2 shrink-0 relative bg-[#06070b]">
+                <!-- 中央垂直分隔線 -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-800 -translate-x-1/2"></div>
+
+                <!-- 左賽道儀表板 -->
+                <div class="flex flex-col items-center text-center px-1">
+                    <div class="flex items-center gap-1.5">
+                        <span id="leftModeLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium tracking-wide">More balls</span>
+                        <span id="leftPredictionBadge" class="hidden px-1.5 py-0.2 rounded bg-lime-500/20 border border-lime-400/50 text-lime-300 text-[10px] font-bold">🌟 課堂預測熱門</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div id="leftMathFormula" class="math-display text-lime-400 glow-left h-9 sm:h-12 flex items-center justify-center my-0.5"></div>
+                    
+                    <div class="w-full max-w-[220px] grid grid-cols-2 gap-1 mt-0.5">
+                        <div class="flex flex-col items-center">
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 tracking-widest uppercase">BALLS</span>
+                            <span id="leftBallsVal" class="font-mono-num text-base sm:text-2xl font-bold text-lime-400 leading-tight">1</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 tracking-widest uppercase">POWER</span>
+                            <span id="leftPowerVal" class="font-mono-num text-base sm:text-2xl font-bold text-lime-400 leading-tight">1</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs font-mono-num text-slate-400">
+                        <span>n = <strong id="leftNVal" class="text-slate-200">1</strong></span>
+                        <span>/</span>
+                        <span><strong id="leftStageVal" class="text-slate-200">01</strong> OF <span id="leftTotalStageVal">14</span></span>
+                        <span class="text-slate-600">|</span>
+                        <span class="text-lime-300/90" title="左賽道累計發射波數">總波數: <strong id="leftWaveVal">0</strong></span>
+                    </div>
+                </div>
+
+                <!-- 右賽道儀表板 -->
+                <div class="flex flex-col items-center text-center px-1">
+                    <div class="flex items-center gap-1.5">
+                        <span id="rightModeLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium tracking-wide">More power</span>
+                        <span id="rightPredictionBadge" class="hidden px-1.5 py-0.2 rounded bg-purple-500/20 border border-purple-400/50 text-purple-300 text-[10px] font-bold">🌟 課堂預測熱門</span>
+                    </div>
+                    <div id="rightMathFormula" class="math-display text-purple-400 glow-right h-9 sm:h-12 flex items-center justify-center my-0.5"></div>
+                    
+                    <div class="w-full max-w-[220px] grid grid-cols-2 gap-1 mt-0.5">
+                        <div class="flex flex-col items-center">
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 tracking-widest uppercase">BALLS</span>
+                            <span id="rightBallsVal" class="font-mono-num text-base sm:text-2xl font-bold text-purple-400 leading-tight">1</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 tracking-widest uppercase">POWER</span>
+                            <span id="rightPowerVal" class="font-mono-num text-base sm:text-2xl font-bold text-purple-400 leading-tight">1</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs font-mono-num text-slate-400">
+                        <span>n = <strong id="rightNVal" class="text-slate-200">1</strong></span>
+                        <span>/</span>
+                        <span><strong id="rightStageVal" class="text-slate-200">01</strong> OF <span id="rightTotalStageVal">14</span></span>
+                        <span class="text-slate-600">|</span>
+                        <span class="text-purple-300/90" title="右賽道累計發射波數">總波數: <strong id="rightWaveVal">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部：Canvas 視覺化賽道 -->
+            <div id="canvasContainer" class="w-full flex-1 relative min-h-0">
+                <canvas id="raceCanvas" class="w-full h-full block"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <!-- 5. 彈出式面板：「賽前導覽與預測提示」 (零劇透！採用示範數列局部追趕片段 + 雙模式節奏微縮圖) -->
+    <div id="introModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-5">
+        <div class="bg-[#111420] border border-amber-500/40 rounded-2xl max-w-5xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- 標題列 -->
+            <div class="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">
+                        <i class="ph-fill ph-sparkle text-xl"></i>
+                    </span>
+                    <div>
+                        <h2 class="font-extrabold text-white text-base sm:text-lg leading-tight">
+                            賽前觀察指南：當「前期落後但加速極快」遇上「前期領先但穩定成長」，誰會先破關？
+                        </h2>
+                        <p class="text-xs text-slate-400">
+                            請先觀察下方「黃金交叉局部示範片段」與「兩種競賽發射機制」的差異，做出你的預測後再進入比賽！
+                        </p>
+                    </div>
+                </div>
+                <button id="btnCloseIntroTop" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="關閉導覽">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 內容主體 -->
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-300">
+                
+                <!-- 第一部分：示範數列在「黃金交叉瞬間與之後」的局部動畫 (使用 2^(n-1) vs 10n 示範，不劇透主比賽結果) -->
+                <div class="p-4 rounded-xl bg-slate-900/95 border border-indigo-500/30 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-bold text-xs">
+                                🔎 觀察示範片段（非正式比賽題目）
+                            </span>
+                            <span class="font-bold text-white text-sm">
+                                指數成長 <code class="text-lime-400">2^(n-1)</code> vs 線性等差 <code class="text-purple-400">10n</code> 在「黃金交叉瞬間 (n = 6 → 8)」發生了什麼事？
+                            </span>
+                        </div>
+                        <span class="text-[11px] font-mono-num text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                            ⚡ 僅擷取中間追越片段，終點前自動重播
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <!-- 左側：文字引導 -->
+                        <div class="lg:col-span-5 space-y-2 text-xs leading-relaxed text-slate-300">
+                            <p>
+                                在許多函數競賽中，雙方會經歷<strong>「前期差距拉開」</strong>與<strong>「後期黃金交叉反超」</strong>兩個階段。以右側這段局部示範為例：
+                            </p>
+                            <ul class="space-y-1.5 list-disc list-inside">
+                                <li>
+                                    <strong>前期 (n = 1 ~ 6)</strong>：紫隊 <code class="text-purple-300">10n</code> 一路領先，先累積了較高的關卡進度；綠隊 <code class="text-lime-300">2^(n-1)</code> 還在苦苦追趕。
+                                </li>
+                                <li>
+                                    <strong>黃金交叉瞬間 (n = 7)</strong>：綠隊單波產出達到 <code class="text-lime-300">64</code>，首次超越紫隊的 <code class="text-purple-300">70 → 64 vs 60/70</code>，到了 <code class="text-lime-300">n = 8 (128 vs 80)</code> 綠隊消滅血條的速度更是翻倍暴增！
+                                </li>
+                                <li class="text-amber-300 font-medium">
+                                    🤔 <strong>關鍵思考：</strong>單波傷害「反超」之後，綠隊就一定來得及在終點前逆轉嗎？這取決於<strong>「剩下的關卡血量夠不夠厚」</strong>以及<strong>「雙方的發射頻率規則」</strong>！
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 右側：黃金交叉瞬間局部動畫 Canvas -->
+                        <div class="lg:col-span-7 bg-[#06080f] rounded-xl border border-slate-800 p-2.5">
+                            <div class="w-full h-40 sm:h-44 relative">
+                                <canvas id="previewCrossoverCanvas" class="w-full h-full block"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第二部分：兩種競賽模式的發射頻率規則差異 (只展示物理發射機制差異，絕不劇透最終贏家) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- 卡片 A：原影片物理時序 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-lime-500/35 flex flex-col justify-between space-y-3">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full bg-lime-500/20 border border-lime-400/40 text-lime-300 text-xs font-bold">
+                                    🎬 模式一：原影片物理時序 (Video Mode)
+                                </span>
+                                <span class="text-xs font-mono-num text-slate-400">發射週期：依球體距離而異</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                還原原影片的物理動畫設定：當球數變多（<code class="text-lime-300">More balls</code>）時，球體會排成<strong>緊貼在目標條正上方的雙層密集綠帶</strong>，落下距離極短、連續撞擊無空檔；而單顆高威力球（<code class="text-purple-300">More power</code>）則是從較高處單顆落下。
+                            </p>
+                        </div>
+
+                        <!-- 機制微縮動畫 A (僅展示發射頻率與距離，無勝敗結果) -->
+                        <div class="bg-[#06080f] rounded-xl border border-slate-800 p-2">
+                            <div class="flex items-center justify-between text-[11px] font-mono-num text-slate-400 px-2 mb-1">
+                                <span>機制特寫：左方貼近連續撞擊 vs 右方高處單顆落下</span>
+                                <span class="text-lime-300">非 1:1 同步波次</span>
+                            </div>
+                            <div class="w-full h-28 relative">
+                                <canvas id="previewVideoMechCanvas" class="w-full h-full block"></canvas>
+                            </div>
+                        </div>
+
+                        <button id="btnSelectVideoMode" class="w-full py-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
+                            <i class="ph-fill ph-play-circle text-base"></i>
+                            選擇「模式一：原影片物理時序」進入預測與挑戰
+                        </button>
+                    </div>
+
+                    <!-- 卡片 B：純數學同步回合制 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-purple-500/35 flex flex-col justify-between space-y-3">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-bold">
+                                    📐 模式二：純數學同步回合制 (Math Mode)
+                                </span>
+                                <span class="text-xs font-mono-num text-slate-400">發射週期：嚴格 1:1 同時發射</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                排除動畫距離影響，採用<strong>嚴格的離散數學回合制</strong>：中央節拍器每響一次，左邊發射第 <code class="text-indigo-300">k</code> 波的同時，右邊也必定同步發射第 <code class="text-indigo-300">k</code> 波。比的是誰走完所有關卡所需的<strong>「累計總波數 $\sum \lceil \text{目標} / V(n) \rceil$」</strong>較少！
+                            </p>
+                        </div>
+
+                        <!-- 機制微縮動畫 B (僅展示 1:1 節拍同步發射，無勝敗結果) -->
+                        <div class="bg-[#06080f] rounded-xl border border-slate-800 p-2">
+                            <div class="flex items-center justify-between text-[11px] font-mono-num text-slate-400 px-2 mb-1">
+                                <span>機制特寫：雙方隨節拍器嚴格 1:1 同時發射每一波</span>
+                                <span class="text-purple-300">純比累計總波數</span>
+                            </div>
+                            <div class="w-full h-28 relative">
+                                <canvas id="previewMathMechCanvas" class="w-full h-full block"></canvas>
+                            </div>
+                        </div>
+
+                        <button id="btnSelectMathMode" class="w-full py-2 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
+                            <i class="ph-fill ph-play-circle text-base"></i>
+                            選擇「模式二：純數學同步回合制」進入預測與挑戰
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 第三部分：進入比賽前的三大判斷提示 (不公布答案，給學生判斷工具) -->
+                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                    <div class="font-bold text-amber-300 text-xs sm:text-sm mb-2 flex items-center gap-1.5">
+                        <i class="ph-fill ph-question text-base"></i>
+                        等一下進入主畫面後，你可以如何判斷誰會獲勝？
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                        <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800">
+                            <strong class="text-white block mb-0.5">提示 1：觀察「黃金交叉」發生在第幾關？</strong>
+                            預設題目為左方費氏數列 <code class="text-lime-300">F_n</code> 對決右方二次函數 <code class="text-purple-300">n²</code>。系統會在左方單波數值追平右方時自動暫停，讓你觀察當時雙方差了幾關！
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800">
+                            <strong class="text-white block mb-0.5">提示 2：估算前段「欠下的波數債」有多少？</strong>
+                            在交叉點之前，慢熱的一方在前面每一關都花了不少波數；當進入最後第 14 關（目標 <code class="text-amber-300">12,000</code>）時，省下的波數夠不夠把前面落後的補回來？
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800">
+                            <strong class="text-white block mb-0.5">提示 3：注意右上角的「競賽模式」！</strong>
+                            同一個數學題目，在「原影片物理時序」與「純數學 1:1 回合制」下，最終贏家會不會因此翻盤？試著先預測再按下開始！
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 彈出式面板：「函數與關卡設定」 (支援完整質數、自訂公式語法容錯與即時預覽) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-[#121521] border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-sliders text-indigo-400 text-xl"></i>
+                    <h3 class="font-bold text-white text-base sm:text-lg">自訂雙方競賽函數、等差/等比數列與下方關卡數據</h3>
+                </div>
+                <button id="btnCloseSettings" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 左賽道設定 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-lime-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-lime-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-lime-400 inline-block"></span>
+                                左賽道設定 (Left Track)
+                            </span>
+                            <select id="leftModeSelect" class="bg-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-1 border border-slate-700">
+                                <option value="balls" selected>數量模式 (More balls: V(n)顆球, 威力=1)</option>
+                                <option value="power">威力模式 (More power: 1顆球, 威力=V(n))</option>
+                            </select>
+                        </div>
+
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1">選擇數列 / 函數：</label>
+                            <label class="text-xs text-slate-400 block mb-1">選擇數列或函數：</label>
                             <select id="leftFuncSelect" class="w-full bg-slate-800 text-white text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:border-lime-400 outline-none">
                                 <option value="fib" selected>費氏數列 F_n (1, 1, 2, 3, 5, 8...)</option>
                                 <option value="n2">二次函數 n² (1, 4, 9, 16, 25...)</option>
                                 <option value="n3">三次函數 n³ (1, 8, 27, 64...)</option>
                                 <option value="2n">指數函數 2^(n-1) (1, 2, 4, 8, 16...)</option>
+                                <option value="arithmetic">➕ 等差數列 a_n = a₁ + (n-1)d (自訂首項/公差)</option>
+                                <option value="geometric">✖️ 等比數列 a_n = a₁ · r^(n-1) (自訂首項/公比)</option>
                                 <option value="lucas">盧卡斯數列 L_n (2, 1, 3, 4, 7, 11...)</option>
-                                <option value="prime">質數數列 P_n (2, 3, 5, 7, 11, 13...)</option>
+                                <option value="prime">質數數列 P_n (2, 3, 5, 7, 11, 13... 動態無限精確生成)</option>
                                 <option value="tri">三角形數 n(n+1)/2 (1, 3, 6, 10...)</option>
                                 <option value="fact">階乘數列 n! (1, 2, 6, 24, 120...)</option>
-                                <option value="arithmetic">➕ 等差數列 (自訂首項/公差)</option>
-                                <option value="geometric">✖️ 等比數列 (自訂首項/公比)</option>
-                                <option value="custom_exp">✏️ 自訂顯式公式 f(n)</option>
-                                <option value="custom_rec">🔄 自訂遞迴數列 a_n</option>
+                                <option value="custom_exp">✏️ 自訂顯式公式 f(n) (支援省略乘號如 3n^2+2n)</option>
+                                <option value="custom_rec">🔄 自訂二階遞迴 a_n = p·a_{n-1} + q·a_{n-2}</option>
                             </select>
                         </div>
-                        <!-- 自訂顯式輸入 -->
-                        <div id="leftCustomExpBox" class="hidden">
-                            <label class="text-xs text-slate-400 block mb-1">輸入含 n 的算式 (如 <code class="text-lime-300">2*n^2 + 3</code>)：</label>
-                            <input id="leftCustomExpInput" type="text" value="3*n^2 - 2*n" class="w-full bg-slate-950 text-lime-300 font-mono-num text-sm rounded-lg px-3 py-1.5 border border-slate-700">
-                        </div>
-                    </div>
-                    <!-- 自訂遞迴輸入 -->
-                    <div id="leftCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="leftRecA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">第二項 a₂</label>
-                            <input id="leftRecA2" type="number" value="2" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">p (乘 a_{n-1})</label>
-                            <input id="leftRecP" type="number" step="0.5" value="2" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">q (乘 a_{n-2})</label>
-                            <input id="leftRecQ" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                    </div>
-                    <!-- 自訂等差輸入 -->
-                    <div id="leftArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="leftArithA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">公差 d</label>
-                            <input id="leftArithD" type="number" value="2" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                    </div>
-                    <!-- 自訂等比輸入 -->
-                    <div id="leftGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="leftGeomA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">公比 r</label>
-                            <input id="leftGeomR" type="number" value="2" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 右賽道設定 -->
-                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-purple-500/30 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-bold text-purple-400 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block"></span>
-                            右賽道函數設定 (Right Track)
-                        </span>
-                        <select id="rightModeSelect" class="bg-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-1 border border-slate-700">
-                            <option value="balls">數量模式 (More balls: V(n)顆球, 威力=1)</option>
-                            <option value="power" selected>威力模式 (More power: 1顆球, 威力=V(n))</option>
-                        </select>
+                        <!-- 等差數列參數 -->
+                        <div id="leftArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="leftArithA1" type="number" value="5" class="w-full bg-slate-950 text-white font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">公差 d</label>
+                                <input id="leftArithD" type="number" value="15" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                        </div>
+
+                        <!-- 等比數列參數 -->
+                        <div id="leftGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="leftGeomA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">公比 r</label>
+                                <input id="leftGeomR" type="number" step="0.1" value="2" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                        </div>
+
+                        <!-- 自訂顯式輸入 (含語法容錯與即時預覽) -->
+                        <div id="leftCustomExpBox" class="hidden pt-2 border-t border-slate-800 space-y-1.5">
+                            <label class="text-xs text-slate-400 block">
+                                輸入含 <code class="text-lime-300">n</code> 的算式（支援省略乘號，如 <code class="text-lime-300">3n^2 - 2n</code>、<code class="text-lime-300">n(n+1)/2</code>、<code class="text-lime-300">2^n</code>）：
+                            </label>
+                            <input id="leftCustomExpInput" type="text" value="3n^2 - 2n" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-3 py-1.5 border border-slate-700 focus:border-lime-400 outline-none">
+                            <div id="leftCustomExpPreview" class="text-[11px] font-mono-num text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded border border-slate-800">
+                                ✓ 語法有效｜前 4 項預覽：n=1→1, n=2→8, n=3→21, n=4→40
+                            </div>
+                        </div>
+
+                        <!-- 自訂遞迴輸入 -->
+                        <div id="leftCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-2 border-t border-slate-800 text-xs">
+                            <div>
+                                <label class="text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="leftRecA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">第二項 a₂</label>
+                                <input id="leftRecA2" type="number" value="2" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">係數 p</label>
+                                <input id="leftRecP" type="number" step="0.5" value="2" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">係數 q</label>
+                                <input id="leftRecQ" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-lime-300 font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                    <!-- 右賽道設定 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-purple-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block"></span>
+                                右賽道設定 (Right Track)
+                            </span>
+                            <select id="rightModeSelect" class="bg-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-1 border border-slate-700">
+                                <option value="balls">數量模式 (More balls: V(n)顆球, 威力=1)</option>
+                                <option value="power" selected>威力模式 (More power: 1顆球, 威力=V(n))</option>
+                            </select>
+                        </div>
+
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1">選擇數列 / 函數：</label>
+                            <label class="text-xs text-slate-400 block mb-1">選擇數列或函數：</label>
                             <select id="rightFuncSelect" class="w-full bg-slate-800 text-white text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:border-purple-400 outline-none">
                                 <option value="fib">費氏數列 F_n (1, 1, 2, 3, 5, 8...)</option>
                                 <option value="n2" selected>二次函數 n² (1, 4, 9, 16, 25...)</option>
                                 <option value="n3">三次函數 n³ (1, 8, 27, 64...)</option>
                                 <option value="2n">指數函數 2^(n-1) (1, 2, 4, 8, 16...)</option>
+                                <option value="arithmetic">➕ 等差數列 a_n = a₁ + (n-1)d (自訂首項/公差)</option>
+                                <option value="geometric">✖️ 等比數列 a_n = a₁ · r^(n-1) (自訂首項/公比)</option>
                                 <option value="lucas">盧卡斯數列 L_n (2, 1, 3, 4, 7, 11...)</option>
-                                <option value="prime">質數數列 P_n (2, 3, 5, 7, 11, 13...)</option>
+                                <option value="prime">質數數列 P_n (2, 3, 5, 7, 11, 13... 動態無限精確生成)</option>
                                 <option value="tri">三角形數 n(n+1)/2 (1, 3, 6, 10...)</option>
                                 <option value="fact">階乘數列 n! (1, 2, 6, 24, 120...)</option>
-                                <option value="arithmetic">➕ 等差數列 (自訂首項/公差)</option>
-                                <option value="geometric">✖️ 等比數列 (自訂首項/公比)</option>
-                                <option value="custom_exp">✏️ 自訂顯式公式 f(n)</option>
-                                <option value="custom_rec">🔄 自訂遞迴數列 a_n</option>
+                                <option value="custom_exp">✏️ 自訂顯式公式 f(n) (支援省略乘號如 15n+10)</option>
+                                <option value="custom_rec">🔄 自訂二階遞迴 a_n = p·a_{n-1} + q·a_{n-2}</option>
                             </select>
                         </div>
-                        <!-- 自訂顯式輸入 -->
-                        <div id="rightCustomExpBox" class="hidden">
-                            <label class="text-xs text-slate-400 block mb-1">輸入含 n 的算式 (如 <code class="text-purple-300">10*n + 5</code>)：</label>
-                            <input id="rightCustomExpInput" type="text" value="10*n" class="w-full bg-slate-950 text-purple-300 font-mono-num text-sm rounded-lg px-3 py-1.5 border border-slate-700">
+
+                        <!-- 等差數列參數 -->
+                        <div id="rightArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="rightArithA1" type="number" value="10" class="w-full bg-slate-950 text-white font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">公差 d</label>
+                                <input id="rightArithD" type="number" value="20" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                        </div>
+
+                        <!-- 等比數列參數 -->
+                        <div id="rightGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="rightGeomA1" type="number" value="2" class="w-full bg-slate-950 text-white font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">公比 r</label>
+                                <input id="rightGeomR" type="number" step="0.1" value="2" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2.5 py-1 border border-slate-700">
+                            </div>
+                        </div>
+
+                        <!-- 自訂顯式輸入 (含語法容錯與即時預覽) -->
+                        <div id="rightCustomExpBox" class="hidden pt-2 border-t border-slate-800 space-y-1.5">
+                            <label class="text-xs text-slate-400 block">
+                                輸入含 <code class="text-purple-300">n</code> 的算式（支援省略乘號，如 <code class="text-purple-300">15n + 10</code>、<code class="text-purple-300">2n^2 + 5</code>）：
+                            </label>
+                            <input id="rightCustomExpInput" type="text" value="15n + 10" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-3 py-1.5 border border-slate-700 focus:border-purple-400 outline-none">
+                            <div id="rightCustomExpPreview" class="text-[11px] font-mono-num text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded border border-slate-800">
+                                ✓ 語法有效｜前 4 項預覽：n=1→25, n=2→40, n=3→55, n=4→70
+                            </div>
+                        </div>
+
+                        <!-- 自訂遞迴輸入 -->
+                        <div id="rightCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-2 border-t border-slate-800 text-xs">
+                            <div>
+                                <label class="text-slate-400 block mb-1">首項 a₁</label>
+                                <input id="rightRecA1" type="number" value="2" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">第二項 a₂</label>
+                                <input id="rightRecA2" type="number" value="4" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">係數 p</label>
+                                <input id="rightRecP" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">係數 q</label>
+                                <input id="rightRecQ" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
+                            </div>
                         </div>
                     </div>
-                    <!-- 自訂遞迴輸入 -->
-                    <div id="rightCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="rightRecA1" type="number" value="2" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">第二項 a₂</label>
-                            <input id="rightRecA2" type="number" value="4" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">p (乘 a_{n-1})</label>
-                            <input id="rightRecP" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">q (乘 a_{n-2})</label>
-                            <input id="rightRecQ" type="number" step="0.5" value="1" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                    </div>
-                    <!-- 自訂等差輸入 -->
-                    <div id="rightArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="rightArithA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">公差 d</label>
-                            <input id="rightArithD" type="number" value="3" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
+                </div>
+
+                <!-- 下方關卡進度條設定 -->
+                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="font-bold text-slate-200 flex items-center gap-1.5">
+                            <i class="ph-fill ph-flag-checkered text-indigo-400 text-base"></i>
+                            下方關卡進度條數據 (Milestones)
+                        </span>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button data-preset="classic" class="preset-btn px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-medium transition">
+                                1. 影片經典款 (14關: 5 ~ 12,000)
+                            </button>
+                            <button data-preset="linear" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
+                                2. 等差線性款 (10關)
+                            </button>
+                            <button data-preset="log" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
+                                3. 對數倍率款 (10關)
+                            </button>
+                            <button data-preset="short" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
+                                4. 課堂快速體驗 (8關)
+                            </button>
                         </div>
                     </div>
-                    <!-- 自訂等比輸入 -->
-                    <div id="rightGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-xs">
-                        <div>
-                            <label class="text-slate-400 block mb-1">首項 a₁</label>
-                            <input id="rightGeomA1" type="number" value="1" class="w-full bg-slate-950 text-white font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">公比 r</label>
-                            <input id="rightGeomR" type="number" value="3" class="w-full bg-slate-950 text-purple-300 font-mono-num rounded px-2 py-1 border border-slate-700">
-                        </div>
-                    </div>
+                    <input id="milestonesInput" type="text" value="5, 10, 15, 20, 30, 40, 60, 80, 100, 150, 200, 300, 1000, 12000" class="w-full bg-slate-950 text-slate-200 font-mono-num text-xs sm:text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-400 outline-none">
                 </div>
             </div>
 
-            <!-- 下方進度條關卡刻度設定 (Milestones) -->
-            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-2.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                        <i class="ph-fill ph-flag-checkered text-indigo-400 text-base"></i>
-                        下方關卡進度條數據設定 (可自由修改或選擇預設模板)
-                    </span>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <button data-preset="classic" class="preset-btn px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-medium transition">
-                            1. 影片經典款 (14關)
-                        </button>
-                        <button data-preset="linear" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
-                            2. 等差線性款 (10關)
-                        </button>
-                        <button data-preset="log" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
-                            3. 對數倍率款 (10關)
-                        </button>
-                        <button data-preset="short" class="preset-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition">
-                            4. 課堂快速體驗 (8關)
-                        </button>
-                    </div>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input id="milestonesInput" type="text" value="5, 10, 15, 20, 30, 40, 60, 80, 100, 150, 200, 300, 1000, 12000" class="flex-1 bg-slate-950 text-slate-200 font-mono-num text-xs sm:text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-400 outline-none" placeholder="請以逗號分隔輸入每一關的目標分數...">
-                    <button id="btnApplySettings" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm transition shadow-md shrink-0">
-                        套用設定並重置比賽
-                    </button>
-                </div>
+            <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex justify-end gap-2">
+                <button id="btnApplySettings" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm transition shadow-lg">
+                    套用設定並重置競賽
+                </button>
             </div>
-        </div>
-    </section>
-
-    <!-- 教學提示橫幅 (例如 n=12 黃金交叉觸發時顯示) -->
-    <div id="teachingBanner" class="hidden w-full bg-amber-500/15 border-b border-amber-400/40 px-4 py-2.5 text-center z-20">
-        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-3">
-            <span class="text-amber-300 text-sm font-semibold flex items-center gap-1.5">
-                <i class="ph-fill ph-lightbulb text-lg"></i>
-                <span id="teachingBannerText">課堂觀察點：當 n = 12 時，費氏數列 F₁₂ = 144，而二次函數 12² = 144，雙方單回合產出完全平手！猜猜看接下來誰會逆轉勝？</span>
-            </span>
-            <button id="btnResumeFromBanner" class="px-3 py-1 rounded-md bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition">
-                繼續觀看對決
-            </button>
         </div>
     </div>
 
-    <!-- 主競賽舞台 (雙欄資訊 + 互動 Canvas) -->
-    <main class="flex-1 w-full max-w-5xl mx-auto px-2 sm:px-6 py-4 flex flex-col items-center">
-        
-        <!-- 頂部函數數學符號與即時數據儀表板 (仿原影片極簡高對比風格) -->
-        <div class="w-full grid grid-cols-2 border-b border-slate-800 pb-3 relative">
-            <!-- 中央分隔線 -->
-            <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-800/90 -translate-x-1/2"></div>
-
-            <!-- 左側儀表板 -->
-            <div class="flex flex-col items-center px-2 sm:px-6 text-center">
-                <span id="leftModeLabel" class="text-xs sm:text-sm text-slate-300 font-medium tracking-wide mb-1">More balls</span>
-                <div id="leftMathFormula" class="math-display text-lime-400 glow-left h-14 sm:h-16 flex items-center justify-center my-1"></div>
-                
-                <div class="w-full max-w-[260px] grid grid-cols-2 gap-2 mt-2">
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase">BALLS</span>
-                        <span id="leftBallsVal" class="font-mono-num text-xl sm:text-3xl font-bold text-lime-400 mt-0.5">1</span>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase">POWER</span>
-                        <span id="leftPowerVal" class="font-mono-num text-xl sm:text-3xl font-bold text-lime-400 mt-0.5">1</span>
-                    </div>
-                </div>
-
-                <div class="mt-2.5 flex items-center gap-3 text-xs sm:text-sm font-mono-num text-slate-400">
-                    <span>n = <strong id="leftNVal" class="text-slate-200">1</strong></span>
-                    <span>/</span>
-                    <span><strong id="leftStageVal" class="text-slate-200">01</strong> OF <span id="leftTotalStageVal">14</span></span>
-                </div>
-            </div>
-
-            <!-- 右側儀表板 -->
-            <div class="flex flex-col items-center px-2 sm:px-6 text-center">
-                <span id="rightModeLabel" class="text-xs sm:text-sm text-slate-300 font-medium tracking-wide mb-1">More power</span>
-                <div id="rightMathFormula" class="math-display text-purple-400 glow-right h-14 sm:h-16 flex items-center justify-center my-1"></div>
-                
-                <div class="w-full max-w-[260px] grid grid-cols-2 gap-2 mt-2">
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase">BALLS</span>
-                        <span id="rightBallsVal" class="font-mono-num text-xl sm:text-3xl font-bold text-purple-400 mt-0.5">1</span>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase">POWER</span>
-                        <span id="rightPowerVal" class="font-mono-num text-xl sm:text-3xl font-bold text-purple-400 mt-0.5">1</span>
-                    </div>
-                </div>
-
-                <div class="mt-2.5 flex items-center gap-3 text-xs sm:text-sm font-mono-num text-slate-400">
-                    <span>n = <strong id="rightNVal" class="text-slate-200">1</strong></span>
-                    <span>/</span>
-                    <span><strong id="rightStageVal" class="text-slate-200">01</strong> OF <span id="rightTotalStageVal">14</span></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 互動 Canvas 賽道區域 -->
-        <div id="canvasContainer" class="w-full relative flex-1 min-h-[540px] sm:min-h-[620px]">
-            <canvas id="raceCanvas" class="w-full h-full block"></canvas>
-        </div>
-
-    </main>
-
-    <!-- 可收合的「即時數據對照表」彈出視窗 / 抽屜 -->
-    <div id="tableModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+    <!-- 7. 彈出式面板：「數據對照表」 (預設隱藏波數答案，讓學生先看函數值預測，可一鍵揭曉波數) -->
+    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-3 sm:p-6">
         <div class="bg-[#121521] border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-5 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                     <i class="ph-fill ph-chart-line-up text-emerald-400 text-xl"></i>
-                    <h3 class="font-bold text-white text-base sm:text-lg">雙方函數成長數值對照表 (n = 1 ~ 16)</h3>
+                    <h3 class="font-bold text-white text-base sm:text-lg">雙方函數成長數值與黃金交叉觀察表</h3>
                 </div>
-                <button id="btnCloseTable" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <i class="ph ph-x text-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="btnToggleRevealWaves" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold transition flex items-center gap-1">
+                        <i id="iconRevealWaves" class="ph-fill ph-eye-slash"></i>
+                        <span id="textRevealWaves">揭曉各關所需波數計算 (課堂公布答案用)</span>
+                    </button>
+                    <button id="btnCloseTable" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                        <i class="ph ph-x text-lg"></i>
+                    </button>
+                </div>
             </div>
             <div class="p-4 overflow-y-auto text-xs sm:text-sm">
-                <p class="text-slate-400 mb-3">
-                    透過代數數值觀察「多項式成長」與「指數型成長」的漸近行為差異。當兩邊數值相等或反超時會以高亮標示：
-                </p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse font-mono-num">
                         <thead>
                             <tr class="border-b border-slate-700 text-slate-400 bg-slate-900/60">
                                 <th class="py-2 px-3">回合 n</th>
-                                <th id="thLeftName" class="py-2 px-3 text-lime-400">左賽道單回產出 V_L(n)</th>
-                                <th id="thRightName" class="py-2 px-3 text-purple-400">右賽道單回產出 V_R(n)</th>
-                                <th class="py-2 px-3">單回領先者與差距</th>
+                                <th class="py-2 px-3 text-lime-400">左賽道單波總值 V_L(n)</th>
+                                <th class="py-2 px-3 text-purple-400">右賽道單波總值 V_R(n)</th>
+                                <th class="py-2 px-3">單波強弱比較 / 當關目標</th>
                             </tr>
                         </thead>
-                        <tbody id="comparisonTableBody" class="divide-y divide-slate-800/80">
-                            <!-- 由 JS 動態生成 -->
-                        </tbody>
+                        <tbody id="comparisonTableBody" class="divide-y divide-slate-800/80"></tbody>
                     </table>
                 </div>
             </div>
@@ -477,14 +689,14 @@
 
     <script>
         /**************************************************************************
-         * 1. 音效合成引擎 (Web Audio API) - 為不同函數模式打造差異化聽覺回饋
+         * 1. Web Audio API 音效引擎
          **************************************************************************/
         class SoundEngine {
             constructor() {
                 this.ctx = null;
                 this.muted = false;
-                this.lastLeftSoundTime = 0;
-                this.lastRightSoundTime = 0;
+                this.lastLeftSound = 0;
+                this.lastRightSound = 0;
             }
 
             init() {
@@ -497,103 +709,72 @@
                 }
             }
 
-            // 左賽道 / 多球模式：清脆空靈的水滴木琴音 (Sine/Triangle 高頻短音)
-            playLeftHit(stageIndex, progressRatio) {
+            playLeftHit(stageIndex) {
                 if (this.muted || !this.ctx) return;
                 const now = performance.now();
-                // 避免同時間數百顆球造成破音，限制最小發聲間隔 22ms
-                if (now - this.lastLeftSoundTime < 22) return;
-                this.lastLeftSoundTime = now;
+                if (now - this.lastLeftSound < 38) return;
+                this.lastLeftSound = now;
 
                 try {
                     const t = this.ctx.currentTime;
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-
-                    // 隨關卡與消除進度微幅升高音高，呈現清脆急雨感
-                    const baseFreq = 520 + (stageIndex * 28) + (progressRatio * 160) + (Math.random() * 35);
+                    const freq = 580 + Math.min(stageIndex * 22, 320) + (Math.random() * 25);
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(baseFreq, t);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, t + 0.045);
+                    osc.frequency.setValueAtTime(freq, t);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 1.18, t + 0.04);
 
-                    gain.gain.setValueAtTime(0.08, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                    gain.gain.setValueAtTime(0.06, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
 
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start(t);
-                    osc.stop(t + 0.055);
+                    osc.stop(t + 0.05);
                 } catch (e) {}
             }
 
-            // 右賽道 / 威力模式：低沉厚重的重擊共鳴音 (Triangle 低頻)
             playRightHit(power, stageIndex) {
                 if (this.muted || !this.ctx) return;
                 const now = performance.now();
-                if (now - this.lastRightSoundTime < 28) return;
-                this.lastRightSoundTime = now;
+                if (now - this.lastRightSound < 45) return;
+                this.lastRightSound = now;
 
                 try {
                     const t = this.ctx.currentTime;
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-
-                    // 威力越大，聲音越渾厚低沉
-                    const powerFactor = Math.min(Math.log10(power + 1) * 30, 120);
-                    const baseFreq = Math.max(110, 280 - powerFactor + stageIndex * 8);
+                    const baseFreq = Math.max(150, 340 - Math.log10(power + 1) * 35 + stageIndex * 6);
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(baseFreq * 1.4, t);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.65, t + 0.11);
+                    osc.frequency.setValueAtTime(baseFreq * 1.25, t);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.75, t + 0.075);
 
-                    gain.gain.setValueAtTime(0.16, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(t);
-                    osc.stop(t + 0.13);
-                } catch (e) {}
-            }
-
-            // 破關清脆提示音
-            playStageClear(isLeft) {
-                if (this.muted || !this.ctx) return;
-                try {
-                    const t = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    const freq = isLeft ? 880 : 659.25;
-                    osc.frequency.setValueAtTime(freq, t);
-                    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, t + 0.12);
-
-                    gain.gain.setValueAtTime(0.12, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+                    gain.gain.setValueAtTime(0.11, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
 
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start(t);
-                    osc.stop(t + 0.15);
+                    osc.stop(t + 0.085);
                 } catch (e) {}
             }
 
-            // 獲勝和弦琶音
             playWinFanfare() {
                 if (this.muted || !this.ctx) return;
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((freq, idx) => {
                     try {
-                        const t = this.ctx.currentTime + idx * 0.09;
+                        const t = this.ctx.currentTime + idx * 0.08;
                         const osc = this.ctx.createOscillator();
                         const gain = this.ctx.createGain();
                         osc.type = 'triangle';
                         osc.frequency.setValueAtTime(freq, t);
-                        gain.gain.setValueAtTime(0.18, t);
-                        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                        gain.gain.setValueAtTime(0.15, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
                         osc.connect(gain);
                         gain.connect(this.ctx.destination);
                         osc.start(t);
-                        osc.stop(t + 0.36);
+                        osc.stop(t + 0.32);
                     } catch (e) {}
                 });
             }
@@ -602,79 +783,213 @@
         const sound = new SoundEngine();
 
         /**************************************************************************
-         * 2. 數學數列與函數計算引擎
+         * 2. 修正一：完整無限精確的質數數列產生器 (Dynamic Prime Sieve & Cache)
          **************************************************************************/
-        const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113];
+        const PRIME_CACHE = [2, 3];
 
+        function getNthPrime(n) {
+            const targetIdx = Math.max(1, Math.floor(n)) - 1;
+            while (PRIME_CACHE.length <= targetIdx) {
+                let candidate = PRIME_CACHE[PRIME_CACHE.length - 1] + 2;
+                while (true) {
+                    let isPrime = true;
+                    const limit = Math.floor(Math.sqrt(candidate));
+                    for (let i = 0; i < PRIME_CACHE.length; i++) {
+                        const p = PRIME_CACHE[i];
+                        if (p > limit) break;
+                        if (candidate % p === 0) {
+                            isPrime = false;
+                            break;
+                        }
+                    }
+                    if (isPrime) {
+                        PRIME_CACHE.push(candidate);
+                        break;
+                    }
+                    candidate += 2;
+                }
+            }
+            return PRIME_CACHE[targetIdx];
+        }
+
+        /**************************************************************************
+         * 3. 修正三：自訂顯式公式的安全性白名單與隱含乘法容錯解析器
+         **************************************************************************/
+        function parseAndNormalizeCustomExpr(rawInput) {
+            if (!rawInput || typeof rawInput !== 'string') {
+                return { valid: false, fn: () => 1, latex: '1', error: '公式不可為空' };
+            }
+
+            // 1. 全形字元與常見數學符號標準化
+            let s = rawInput.trim()
+                .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+                .replace(/Ｎ/g, 'n').replace(/N/g, 'n')
+                .replace(/＋/g, '+').replace(/－/g, '-')
+                .replace(/[×✕＊]/g, '*').replace(/[÷／]/g, '/')
+                .replace(/（/g, '(').replace(/）/g, ')')
+                .replace(/︿/g, '^')
+                .replace(/\s+/g, '');
+
+            if (!s) {
+                return { valid: false, fn: () => 1, latex: '1', error: '公式不可為空' };
+            }
+
+            // 2. 安全性白名單檢查：將允許的數學函數暫時替換為標記，檢查剩餘字元是否僅含數字、n、運算子與括號
+            const allowedFuncs = ['sqrt', 'sin', 'cos', 'tan', 'log', 'ln', 'abs', 'floor', 'ceil', 'round', 'max', 'min', 'pow', 'pi', 'e'];
+            let checkStr = s.toLowerCase();
+            for (const fnName of allowedFuncs) {
+                checkStr = checkStr.split(fnName).join('');
+            }
+            if (/[^0-9n+\-*/^().,]/.test(checkStr)) {
+                return { valid: false, fn: (n) => n, latex: '\\text{語法錯誤}', error: '包含不支援的符號或未知變數（僅限使用變數 n）' };
+            }
+
+            // 3. 保護函數名稱，準備插入隱含乘號 (例如 3n -> 3*n, n(n+1) -> n*(n+1), (n+1)(n+2) -> (n+1)*(n+2), 2sin(n) -> 2*sin(n))
+            const funcMap = {
+                'sqrt': '@SQRT@', 'floor': '@FLOOR@', 'ceil': '@CEIL@', 'round': '@ROUND@',
+                'sin': '@SIN@', 'cos': '@COS@', 'tan': '@TAN@', 'log': '@LOG@', 'ln': '@LN@',
+                'abs': '@ABS@', 'max': '@MAX@', 'min': '@MIN@', 'pow': '@POW@', 'pi': '@PI@'
+            };
+
+            let tokenized = s.toLowerCase();
+            // 依長度排序優先替換
+            Object.keys(funcMap).sort((a, b) => b.length - a.length).forEach(k => {
+                tokenized = tokenized.split(k).join(funcMap[k]);
+            });
+
+            // 補齊隱含乘法：
+            // (a) 數字後緊接 n、左括號或函數/常數標記: 3n -> 3*n, 3(n+1) -> 3*(n+1), 2@SIN@ -> 2*@SIN@
+            tokenized = tokenized.replace(/(\d)(n|\(|@)/g, '$1*$2');
+            // (b) n 後緊接數字、左括號或函數標記: n2 -> n^2 或 n*2 (轉為 n*2), n(n+1) -> n*(n+1)
+            tokenized = tokenized.replace(/(n)(\d|\(|@)/g, '$1*$2');
+            // (c) 右括號後緊接數字、n、左括號或函數標記: (n+1)2 -> (n+1)*2, (n+1)n -> (n+1)*n, (n+1)(n+2) -> (n+1)*(n+2)
+            tokenized = tokenized.replace(/(\))(\d|n|\(|@)/g, '$1*$2');
+            // (d) 連續的 n (如 nn -> n*n)
+            tokenized = tokenized.replace(/nn/g, 'n*n');
+
+            // 4. 轉為 JavaScript Math 運算式
+            let jsExpr = tokenized
+                .replace(/\^/g, '**')
+                .replace(/@SQRT@/g, 'Math.sqrt')
+                .replace(/@FLOOR@/g, 'Math.floor')
+                .replace(/@CEIL@/g, 'Math.ceil')
+                .replace(/@ROUND@/g, 'Math.round')
+                .replace(/@SIN@/g, 'Math.sin')
+                .replace(/@COS@/g, 'Math.cos')
+                .replace(/@TAN@/g, 'Math.tan')
+                .replace(/@LOG@/g, 'Math.log10')
+                .replace(/@LN@/g, 'Math.log')
+                .replace(/@ABS@/g, 'Math.abs')
+                .replace(/@MAX@/g, 'Math.max')
+                .replace(/@MIN@/g, 'Math.min')
+                .replace(/@POW@/g, 'Math.pow')
+                .replace(/@PI@/g, 'Math.PI');
+
+            // 防止負號與次方優先權衝突 (如 -n**2 在 JS 會報錯，轉為 -(n**2))
+            jsExpr = jsExpr.replace(/(^|[+\-*/,(])-([a-zA-Z0-9_.]+)\*\*([a-zA-Z0-9_.]+)/g, '$1-($2**$3)');
+
+            try {
+                const compiledFn = new Function('n', `"use strict"; return (${jsExpr});`);
+                // 測試 n = 1, 2, 3, 4 是否可正常求值
+                for (let testN = 1; testN <= 4; testN++) {
+                    const val = compiledFn(testN);
+                    if (typeof val !== 'number' || isNaN(val)) {
+                        return { valid: false, fn: (n) => n, latex: '\\text{無效算式}', error: '計算結果非有效數值' };
+                    }
+                }
+
+                // 轉為美觀的 LaTeX 字串
+                let latexStr = s
+                    .replace(/\*/g, ' \\cdot ')
+                    .replace(/sqrt\(([^)]+)\)/gi, '\\sqrt{$1}')
+                    .replace(/\^(\d+)/g, '^{$1}');
+
+                const safeEval = (n) => {
+                    try {
+                        const v = compiledFn(n);
+                        return isFinite(v) ? Math.max(1, Math.round(v)) : 1;
+                    } catch (e) {
+                        return 1;
+                    }
+                };
+
+                return { valid: true, fn: safeEval, latex: latexStr, error: null };
+            } catch (err) {
+                return { valid: false, fn: (n) => n, latex: '\\text{語法錯誤}', error: '算式括號或運算子不完整' };
+            }
+        }
+
+        function updateCustomExprPreviewUI(side) {
+            const inputEl = document.getElementById(`${side}CustomExpInput`);
+            const previewEl = document.getElementById(`${side}CustomExpPreview`);
+            if (!inputEl || !previewEl) return;
+
+            const parsed = parseAndNormalizeCustomExpr(inputEl.value);
+            if (parsed.valid) {
+                const samples = [1, 2, 3, 4].map(k => `n=${k}→${parsed.fn(k).toLocaleString()}`).join(', ');
+                previewEl.className = 'text-[11px] font-mono-num text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded border border-emerald-500/30';
+                previewEl.textContent = `✓ 語法有效｜前 4 項預覽：${samples}`;
+            } else {
+                previewEl.className = 'text-[11px] font-mono-num text-rose-400 bg-rose-950/40 px-2.5 py-1 rounded border border-rose-500/40';
+                previewEl.textContent = `✗ ${parsed.error}（將暫以 f(n)=n 計算）`;
+            }
+        }
+
+        /**************************************************************************
+         * 4. 數學數列與函數評估引擎
+         **************************************************************************/
         function evaluateTrackFunction(side, n) {
             const selectEl = document.getElementById(`${side}FuncSelect`);
             const funcType = selectEl ? selectEl.value : (side === 'left' ? 'fib' : 'n2');
-
             n = Math.max(1, Math.floor(n));
 
             switch (funcType) {
                 case 'fib': {
                     let a = 1, b = 1;
                     for (let i = 3; i <= n; i++) {
-                        let temp = a + b;
+                        let tmp = a + b;
                         a = b;
-                        b = temp;
+                        b = tmp;
                     }
                     return n === 1 ? 1 : b;
                 }
-                case 'n2':
-                    return n * n;
-                case 'n3':
-                    return n * n * n;
-                case '2n':
-                    return Math.pow(2, n - 1);
-                case 'lucas': {
-                    if (n === 1) return 2;
-                    if (n === 2) return 1;
-                    let a = 2, b = 1;
-                    for (let i = 3; i <= n; i++) {
-                        let temp = a + b;
-                        a = b;
-                        b = temp;
-                    }
-                    return b;
-                }
-                case 'prime': {
-                    if (n <= PRIMES.length) return PRIMES[n - 1];
-                    return PRIMES[PRIMES.length - 1] + (n - PRIMES.length) * 6;
-                }
-                case 'tri':
-                    return Math.round((n * (n + 1)) / 2);
-                case 'fact': {
-                    let res = 1;
-                    for (let i = 2; i <= Math.min(n, 15); i++) res *= i;
-                    return res;
-                }
+                case 'n2': return n * n;
+                case 'n3': return n * n * n;
+                case '2n': return Math.pow(2, n - 1);
                 case 'arithmetic': {
                     const a1 = parseFloat(document.getElementById(`${side}ArithA1`).value) || 0;
                     const d = parseFloat(document.getElementById(`${side}ArithD`).value) || 0;
                     return Math.max(1, Math.round(a1 + (n - 1) * d));
                 }
                 case 'geometric': {
-                    const a1 = parseFloat(document.getElementById(`${side}GeomA1`).value) || 0;
+                    const a1 = parseFloat(document.getElementById(`${side}GeomA1`).value) || 1;
                     const r = parseFloat(document.getElementById(`${side}GeomR`).value) || 1;
                     return Math.max(1, Math.round(a1 * Math.pow(r, n - 1)));
                 }
-                case 'custom_exp': {
-                    const raw = document.getElementById(`${side}CustomExpInput`).value || 'n';
-                    try {
-                        // 將 ^ 替換為 ** 並允許常見數學運算
-                        const safeExpr = raw.replace(/\^/g, '**')
-                                            .replace(/sin/g, 'Math.sin')
-                                            .replace(/cos/g, 'Math.cos')
-                                            .replace(/sqrt/g, 'Math.sqrt')
-                                            .replace(/log/g, 'Math.log');
-                        const fn = new Function('n', `return Math.max(1, Math.round(${safeExpr}));`);
-                        const val = fn(n);
-                        return isFinite(val) && val > 0 ? val : 1;
-                    } catch (e) {
-                        return n;
+                case 'lucas': {
+                    if (n === 1) return 2;
+                    if (n === 2) return 1;
+                    let a = 2, b = 1;
+                    for (let i = 3; i <= n; i++) {
+                        let tmp = a + b;
+                        a = b;
+                        b = tmp;
                     }
+                    return b;
+                }
+                case 'prime': {
+                    return getNthPrime(n);
+                }
+                case 'tri': return Math.round((n * (n + 1)) / 2);
+                case 'fact': {
+                    let res = 1;
+                    for (let i = 2; i <= Math.min(n, 18); i++) res *= i;
+                    return res;
+                }
+                case 'custom_exp': {
+                    const raw = document.getElementById(`${side}CustomExpInput`).value;
+                    const parsed = parseAndNormalizeCustomExpr(raw);
+                    return parsed.fn(n);
                 }
                 case 'custom_rec': {
                     const a1 = parseFloat(document.getElementById(`${side}RecA1`).value) || 1;
@@ -691,8 +1006,7 @@
                     }
                     return Math.max(1, Math.round(prev1));
                 }
-                default:
-                    return n;
+                default: return n;
             }
         }
 
@@ -703,23 +1017,24 @@
                 case 'n2': return 'n^2';
                 case 'n3': return 'n^3';
                 case '2n': return '2^{n-1}';
-                case 'lucas': return 'L_n';
-                case 'prime': return 'P_n';
-                case 'tri': return '\\frac{n(n+1)}{2}';
-                case 'fact': return 'n!';
                 case 'arithmetic': {
                     const a1 = document.getElementById(`${side}ArithA1`).value;
                     const d = document.getElementById(`${side}ArithD`).value;
-                    return `${a1} + (n-1)\\cdot ${d}`;
+                    const sign = parseFloat(d) >= 0 ? '+' : '';
+                    return `${a1} ${sign} ${d}(n-1)`;
                 }
                 case 'geometric': {
                     const a1 = document.getElementById(`${side}GeomA1`).value;
                     const r = document.getElementById(`${side}GeomR`).value;
                     return `${a1} \\cdot ${r}^{n-1}`;
                 }
+                case 'lucas': return 'L_n';
+                case 'prime': return 'P_n';
+                case 'tri': return '\\frac{n(n+1)}{2}';
+                case 'fact': return 'n!';
                 case 'custom_exp': {
-                    const raw = document.getElementById(`${side}CustomExpInput`).value || 'f(n)';
-                    return raw.replace(/\*/g, '\\cdot ');
+                    const raw = document.getElementById(`${side}CustomExpInput`).value;
+                    return parseAndNormalizeCustomExpr(raw).latex;
                 }
                 case 'custom_rec': {
                     const p = document.getElementById(`${side}RecP`).value || 1;
@@ -731,7 +1046,78 @@
         }
 
         /**************************************************************************
-         * 3. 物理與賽道狀態管理 (Track & Simulation Engine)
+         * 5. 修正二：動態偵測「落後方的單波產出首次追平或超越領先方」之黃金交叉回合
+         **************************************************************************/
+        let detectedCrossoverInfo = null; // { n, trailingSide, vL, vR, isEqual }
+
+        function detectDynamicGoldenCross(maxSearchRound = 60) {
+            let earlyLeader = null; // 'left' 或 'right'
+            let firstDiffRound = 1;
+
+            for (let n = 1; n <= maxSearchRound; n++) {
+                const vL = evaluateTrackFunction('left', n);
+                const vR = evaluateTrackFunction('right', n);
+                if (vL < vR) {
+                    earlyLeader = 'right'; // 前期右方領先，左方為落後方
+                    firstDiffRound = n;
+                    break;
+                } else if (vR < vL) {
+                    earlyLeader = 'left';  // 前期左方領先，右方為落後方
+                    firstDiffRound = n;
+                    break;
+                }
+            }
+
+            if (!earlyLeader) return null;
+
+            const trailingSide = earlyLeader === 'right' ? 'left' : 'right';
+
+            for (let n = firstDiffRound + 1; n <= maxSearchRound; n++) {
+                const vL = evaluateTrackFunction('left', n);
+                const vR = evaluateTrackFunction('right', n);
+
+                if (trailingSide === 'left' && vL >= vR) {
+                    return {
+                        n,
+                        trailingSide: 'left',
+                        vL,
+                        vR,
+                        isEqual: vL === vR
+                    };
+                }
+                if (trailingSide === 'right' && vR >= vL) {
+                    return {
+                        n,
+                        trailingSide: 'right',
+                        vL,
+                        vR,
+                        isEqual: vL === vR
+                    };
+                }
+            }
+            return null;
+        }
+
+        function updateGoldenCrossUI() {
+            detectedCrossoverInfo = detectDynamicGoldenCross(60);
+            const labelEl = document.getElementById('goldenCrossLabelText');
+            const chkEl = document.getElementById('chkGoldenCross');
+
+            if (detectedCrossoverInfo) {
+                const sideName = detectedCrossoverInfo.trailingSide === 'left' ? '左方' : '右方';
+                const actionName = detectedCrossoverInfo.isEqual ? '追平' : '反超';
+                labelEl.textContent = `黃金交叉 (n=${detectedCrossoverInfo.n} ${sideName}${actionName}) 暫停`;
+                labelEl.className = 'text-amber-300 font-medium';
+                chkEl.disabled = false;
+            } else {
+                labelEl.textContent = '無單波黃金交叉點';
+                labelEl.className = 'text-slate-500 font-medium';
+                chkEl.disabled = true;
+            }
+        }
+
+        /**************************************************************************
+         * 6. 賽道物理與時序控制器 (TrackState)
          **************************************************************************/
         const PRESET_MILESTONES = {
             classic: [5, 10, 15, 20, 30, 40, 60, 80, 100, 150, 200, 300, 1000, 12000],
@@ -741,16 +1127,16 @@
         };
 
         class TrackState {
-            constructor(side, color, glowColor) {
-                this.side = side; // 'left' or 'right'
+            constructor(side, color) {
+                this.side = side;
                 this.color = color;
-                this.glowColor = glowColor;
-                this.reset([5, 10, 15, 20, 30, 40, 60, 80, 100, 150, 200, 300, 1000, 12000]);
+                this.reset(PRESET_MILESTONES.classic);
             }
 
             reset(milestonesArray) {
                 this.n = 1;
                 this.currentStageIndex = 0;
+                this.totalWaves = 0;
                 this.stages = milestonesArray.map((maxVal, idx) => ({
                     index: idx,
                     max: maxVal,
@@ -758,14 +1144,27 @@
                 }));
                 this.balls = [];
                 this.particles = [];
-                this.waveCooldown = 0; // 初始為0，立刻發射
                 this.finished = false;
                 this.isWinner = false;
-                this.needsNewWave = false;
-                this.clearedStageThisWave = false;
+                this.waveTimer = 0;
+                this.currentWaveDuration = this.getWaveDuration();
                 this.currentVal = evaluateTrackFunction(this.side, 1);
                 this.mode = document.getElementById(`${this.side}ModeSelect`).value;
                 this.updateDashboardUI();
+            }
+
+            getWaveDuration() {
+                const simMode = document.getElementById('simEngineSelect').value;
+                if (simMode === 'math') {
+                    return 0.65;
+                } else {
+                    const isLastStage = (this.currentStageIndex === this.stages.length - 1);
+                    if (this.mode === 'balls') {
+                        return isLastStage ? 0.648 : 0.612;
+                    } else {
+                        return isLastStage ? 0.625 : 0.820;
+                    }
+                }
             }
 
             updateDashboardUI() {
@@ -784,252 +1183,316 @@
                 const stageNum = Math.min(this.currentStageIndex + 1, this.stages.length);
                 document.getElementById(`${this.side}StageVal`).textContent = String(stageNum).padStart(2, '0');
                 document.getElementById(`${this.side}TotalStageVal`).textContent = String(this.stages.length).padStart(2, '0');
+                document.getElementById(`${this.side}WaveVal`).textContent = this.totalWaves;
             }
 
-            spawnWave(trackXCenter, trackWidth) {
+            spawnWaveVisuals(trackXCenter, trackWidth, canvasHeight, waveDuration) {
                 if (this.finished) return;
+                this.totalWaves++;
                 this.updateDashboardUI();
 
+                this.balls = [];
+
                 const totalValue = this.currentVal;
-                const usableWidth = trackWidth * 0.76;
+                const barWidth = trackWidth * 0.82;
+                const usableWidth = barWidth * 0.94;
                 const startX = trackXCenter - usableWidth / 2;
 
+                const targetY = getStageY(this.currentStageIndex, this.stages.length, canvasHeight);
+
                 if (this.mode === 'power') {
-                    // 高威力模式：單顆大球從正中央落下
-                    const radius = Math.min(11, 4.8 + Math.log10(totalValue + 1) * 1.6);
+                    const dropDist = 36;
+                    const travelTime = waveDuration * 0.75;
+                    const vy = dropDist / travelTime;
                     this.balls.push({
                         x: trackXCenter,
-                        y: 12,
-                        vy: 235,
-                        radius: radius,
-                        damage: totalValue
+                        y: targetY - dropDist,
+                        vy: vy,
+                        radius: 4.5,
+                        damage: totalValue,
+                        passingFinish: false
                     });
                 } else {
-                    // 多球模式：掉落 V(n) 顆球（為確保數千顆球時瀏覽器依然流暢，實體視覺球上限為 380 顆，並等比例分配總傷害）
-                    const maxVisualBalls = 380;
-                    const visualCount = Math.min(totalValue, maxVisualBalls);
+                    const visualCount = Math.min(totalValue, 377);
                     const damagePerBall = totalValue / visualCount;
+                    const travelTime = waveDuration * 0.85;
 
-                    // 計算波次高度展開，讓多球像原影片一樣形成密集帶狀雲落下
-                    const spreadHeight = Math.min(85, 10 + Math.log2(visualCount + 1) * 9);
+                    if (visualCount <= 13) {
+                        const baseDrop = 24;
+                        for (let i = 0; i < visualCount; i++) {
+                            const ratio = visualCount === 1 ? 0.5 : i / (visualCount - 1);
+                            const bx = startX + ratio * usableWidth;
+                            const waveOffset = visualCount >= 3 ? Math.sin(ratio * Math.PI * 2) * 3.5 : 0;
+                            const startY = targetY - baseDrop + waveOffset;
+                            const dist = Math.max(8, targetY - startY);
+                            const dmg = (i === visualCount - 1)
+                                ? (totalValue - damagePerBall * (visualCount - 1))
+                                : damagePerBall;
 
-                    for (let i = 0; i < visualCount; i++) {
-                        // 最後一顆球修正浮點數誤差
-                        const dmg = (i === visualCount - 1)
-                            ? (totalValue - damagePerBall * (visualCount - 1))
-                            : damagePerBall;
+                            this.balls.push({
+                                x: bx,
+                                y: startY,
+                                vy: dist / (travelTime * (0.75 + 0.2 * (i / Math.max(1, visualCount)))),
+                                radius: 3.6,
+                                damage: dmg,
+                                passingFinish: false
+                            });
+                        }
+                    } else {
+                        for (let i = 0; i < visualCount; i++) {
+                            const isUpperBand = (i % 2 === 1);
+                            const bandCenterY = isUpperBand ? (targetY - 26) : (targetY - 13);
+                            const bx = startX + Math.random() * usableWidth;
+                            const jitterY = (Math.random() - 0.5) * 5.5;
+                            const startY = bandCenterY + jitterY;
+                            const dist = Math.max(6, targetY - startY);
 
-                        this.balls.push({
-                            x: startX + Math.random() * usableWidth,
-                            y: 10 - Math.random() * spreadHeight,
-                            vy: 220 + Math.random() * 35,
-                            radius: visualCount > 120 ? 3.3 : 4.2,
-                            damage: dmg
-                        });
+                            const hitTimeFraction = 0.18 + 0.74 * (i / visualCount);
+                            const ballTravelTime = waveDuration * hitTimeFraction;
+
+                            const dmg = (i === visualCount - 1)
+                                ? (totalValue - damagePerBall * (visualCount - 1))
+                                : damagePerBall;
+
+                            this.balls.push({
+                                x: bx,
+                                y: startY,
+                                vy: dist / ballTravelTime,
+                                radius: visualCount > 150 ? 2.8 : 3.2,
+                                damage: dmg,
+                                passingFinish: false
+                            });
+                        }
                     }
                 }
             }
 
-            spawnHitParticles(x, y, count = 4) {
-                if (this.particles.length > 180) return; // 控制粒子上限維持 60fps
+            spawnBarDissolveParticles(barStartX, barWidth, barY) {
+                const count = 26;
                 for (let i = 0; i < count; i++) {
-                    const angle = -Math.PI * Math.random(); // 向上噴濺
-                    const speed = 30 + Math.random() * 80;
                     this.particles.push({
-                        x: x,
-                        y: y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed - 20,
-                        alpha: 1,
-                        size: 1.5 + Math.random() * 2
+                        x: barStartX + (i / (count - 1)) * barWidth + (Math.random() - 0.5) * 8,
+                        y: barY + (Math.random() - 0.5) * 4,
+                        vx: (Math.random() - 0.5) * 18,
+                        vy: -8 - Math.random() * 20,
+                        alpha: 0.95,
+                        size: 1.6 + Math.random() * 1.4
                     });
                 }
             }
         }
 
         /**************************************************************************
-         * 4. 主視覺與遊戲迴圈控制
+         * 7. 主競賽舞台 Fixed-Timestep 物理引擎與繪圖
          **************************************************************************/
         const canvas = document.getElementById('raceCanvas');
         const ctx = canvas.getContext('2d');
 
-        const leftTrack = new TrackState('left', '#a3e635', 'rgba(163, 230, 53, 0.45)');
-        const rightTrack = new TrackState('right', '#c084fc', 'rgba(192, 132, 252, 0.45)');
+        const leftTrack = new TrackState('left', '#a3e635');
+        const rightTrack = new TrackState('right', '#c084fc');
 
         let isRunning = false;
         let simSpeed = 1.0;
+        let simElapsedTime = 0;
         let lastFrameTime = performance.now();
         let goldenCrossTriggered = false;
         let raceHasWinner = false;
+        let isPortraitMode = false;
+        let revealTableWaves = false;
 
-        // 渲染上方 KaTeX 數學式
         function renderMathFormulas() {
-            const leftLatex = getLatexFormula('left');
-            const rightLatex = getLatexFormula('right');
-            katex.render(leftLatex, document.getElementById('leftMathFormula'), { throwOnError: false });
-            katex.render(rightLatex, document.getElementById('rightMathFormula'), { throwOnError: false });
+            katex.render(getLatexFormula('left'), document.getElementById('leftMathFormula'), { throwOnError: false });
+            katex.render(getLatexFormula('right'), document.getElementById('rightMathFormula'), { throwOnError: false });
         }
 
-        // 動態調整 Canvas 尺寸
         function resizeCanvas() {
             const container = document.getElementById('canvasContainer');
             const rect = container.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+            canvas.width = Math.max(1, rect.width * dpr);
+            canvas.height = Math.max(1, rect.height * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
         window.addEventListener('resize', resizeCanvas);
 
-        // 計算某一關卡進度條在 Canvas 中的 Y 座標
         function getStageY(stageIdx, totalStages, canvasHeight) {
-            const topSpace = 52;
-            const bottomFinishY = canvasHeight - 48;
-            const availableHeight = bottomFinishY - topSpace - 28;
+            const topSpace = 44;
+            const finishY = canvasHeight - 38;
+            const availableHeight = Math.max(120, finishY - topSpace - 26);
             const gap = availableHeight / Math.max(1, totalStages);
             return topSpace + stageIdx * gap;
         }
 
-        // 更新單一賽道物理狀態
-        function updateTrack(track, dt, trackXCenter, trackWidth, canvasHeight, simMode, advanceOnlyOnClear) {
-            // 更新粒子特效
+        function stepTrackPhysics(track, dt, trackXCenter, trackWidth, canvasHeight) {
             for (let i = track.particles.length - 1; i >= 0; i--) {
                 const p = track.particles[i];
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
-                p.vy += 180 * dt; // 微重力
-                p.alpha -= 2.2 * dt;
+                p.alpha -= 1.8 * dt;
                 if (p.alpha <= 0) track.particles.splice(i, 1);
             }
 
-            if (track.finished) return;
-
-            // 1. Spawner Logic (連續物理模擬專用)
-            if (simMode === 'physics') {
-                track.waveCooldown -= dt;
-                if (track.waveCooldown <= 0) {
-                    // Physics模式下，威力模式(單球)需等畫面清空才能再掉(受限重力下墜)，多球模式則為連續瀑布
-                    const canSpawn = track.mode === 'balls' ? (track.balls.length < 600) : (track.balls.length === 0);
-                    if (canSpawn) {
-                        track.spawnWave(trackXCenter, trackWidth);
-                        track.waveCooldown = track.mode === 'balls' ? 0.12 : 0.05;
-                        
-                        if (!advanceOnlyOnClear) {
-                            track.n++;
-                            checkGoldenCrossHook();
-                        }
+            if (track.finished) {
+                for (let i = track.balls.length - 1; i >= 0; i--) {
+                    const b = track.balls[i];
+                    b.y += b.vy * dt;
+                    if (b.y > canvasHeight - 14) {
+                        track.balls.splice(i, 1);
                     }
                 }
+                return;
             }
 
-            // 2. 移動球體與碰撞判定
+            if (track.totalWaves === 0) {
+                track.currentWaveDuration = track.getWaveDuration();
+                track.waveTimer = 0;
+                track.spawnWaveVisuals(trackXCenter, trackWidth, canvasHeight, track.currentWaveDuration);
+            }
+
+            track.waveTimer += dt;
+            const currentStage = track.stages[track.currentStageIndex];
+            const targetBarY = getStageY(track.currentStageIndex, track.stages.length, canvasHeight);
+            const barWidth = trackWidth * 0.82;
+            const barStartX = trackXCenter - barWidth / 2;
+
             for (let i = track.balls.length - 1; i >= 0; i--) {
                 const b = track.balls[i];
                 b.y += b.vy * dt;
 
-                // 動態取得當前關卡 (物理模式下可能會在同一個迴圈內連破兩關，完美重現瀑布效應)
-                const currentStage = track.stages[track.currentStageIndex];
-                const targetBarY = currentStage ? getStageY(track.currentStageIndex, track.stages.length, canvasHeight) : canvasHeight - 48;
-
-                // 若此關已破，剩餘球體貫穿往下掉
-                if (!currentStage || currentStage.remaining <= 0) {
-                    if (b.y >= canvasHeight - 15) {
-                        track.balls.splice(i, 1);
-                    }
-                    continue;
-                }
-
-                // 撞擊當前關卡
-                if (b.y + b.radius >= targetBarY) {
+                if (b.y >= targetBarY) {
                     currentStage.remaining = Math.max(0, currentStage.remaining - b.damage);
-                    track.spawnHitParticles(b.x, targetBarY, track.mode === 'power' ? 12 : 2);
 
-                    const progressRatio = 1 - (currentStage.remaining / currentStage.max);
                     if (track.side === 'left') {
-                        sound.playLeftHit(track.currentStageIndex, progressRatio);
+                        sound.playLeftHit(track.currentStageIndex);
                     } else {
                         sound.playRightHit(b.damage, track.currentStageIndex);
                     }
 
                     track.balls.splice(i, 1);
 
-                    // 檢查關卡是否歸零破關
-                    if (currentStage.remaining <= 0) {
+                    if (currentStage.remaining <= 1e-4) {
                         currentStage.remaining = 0;
-                        track.clearedStageThisWave = true;
-                        sound.playStageClear(track.side === 'left');
-                        
-                        // 物理模式：立刻推進關卡，不浪費剩餘球體的傷害，讓還在空中的球直接砸向下一關
-                        if (simMode === 'physics') {
-                            track.currentStageIndex++;
-                            if (track.currentStageIndex >= track.stages.length) {
-                                track.finished = true;
-                                if (!raceHasWinner) {
-                                    raceHasWinner = true;
-                                    track.isWinner = true;
-                                    sound.playWinFanfare();
-                                }
-                            } else {
-                                if (advanceOnlyOnClear) {
-                                    track.n++;
-                                    checkGoldenCrossHook();
-                                    track.updateDashboardUI();
-                                }
+                        track.spawnBarDissolveParticles(barStartX, barWidth, targetBarY);
+
+                        const isFinalStage = (track.currentStageIndex === track.stages.length - 1);
+                        if (isFinalStage) {
+                            track.finished = true;
+                            if (!raceHasWinner) {
+                                raceHasWinner = true;
+                                track.isWinner = true;
+                                sound.playWinFanfare();
                             }
+                            for (const remBall of track.balls) {
+                                remBall.passingFinish = true;
+                                remBall.vy = 60 + Math.random() * 45;
+                            }
+                            return;
+                        } else {
+                            track.balls = [];
+                            track.currentStageIndex++;
+                            track.n++;
+                            checkGoldenCrossHook(track.side);
+                            track.updateDashboardUI();
+                            break;
                         }
                     }
                 }
             }
+
+            if (!track.finished && track.waveTimer >= track.currentWaveDuration) {
+                track.waveTimer -= track.currentWaveDuration;
+
+                if (track.balls.length > 0) {
+                    let remainingWaveDmg = 0;
+                    for (const b of track.balls) remainingWaveDmg += b.damage;
+                    track.balls = [];
+
+                    const st = track.stages[track.currentStageIndex];
+                    st.remaining = Math.max(0, st.remaining - remainingWaveDmg);
+
+                    if (st.remaining <= 1e-4) {
+                        st.remaining = 0;
+                        track.spawnBarDissolveParticles(barStartX, barWidth, targetBarY);
+                        if (track.currentStageIndex === track.stages.length - 1) {
+                            track.finished = true;
+                            if (!raceHasWinner) {
+                                raceHasWinner = true;
+                                track.isWinner = true;
+                                sound.playWinFanfare();
+                            }
+                            return;
+                        } else {
+                            track.currentStageIndex++;
+                            track.n++;
+                            checkGoldenCrossHook(track.side);
+                        }
+                    }
+                }
+
+                if (!track.finished) {
+                    track.currentWaveDuration = track.getWaveDuration();
+                    track.spawnWaveVisuals(trackXCenter, trackWidth, canvasHeight, track.currentWaveDuration);
+                }
+            }
         }
 
-        // 檢查是否觸發 n=12 黃金交叉自動暫停
-        function checkGoldenCrossHook() {
+        // 當任一賽道抵達「動態偵測出的黃金交叉回合」時觸發暫停，讓學生猜測結果
+        function checkGoldenCrossHook(triggeredSide) {
             const chk = document.getElementById('chkGoldenCross');
-            if (!chk || !chk.checked || goldenCrossTriggered) return;
+            if (!chk || !chk.checked || goldenCrossTriggered || !detectedCrossoverInfo) return;
 
-            if (leftTrack.n === 12 || rightTrack.n === 12) {
+            const crossN = detectedCrossoverInfo.n;
+            if (leftTrack.n === crossN || rightTrack.n === crossN) {
                 goldenCrossTriggered = true;
                 pauseSimulation();
-                const leftV12 = evaluateTrackFunction('left', 12);
-                const rightV12 = evaluateTrackFunction('right', 12);
+
+                const { vL, vR, trailingSide, isEqual } = detectedCrossoverInfo;
+                const trailingName = trailingSide === 'left' ? '左賽道' : '右賽道';
+                const leadingName = trailingSide === 'left' ? '右賽道' : '左賽道';
+                const actionDesc = isEqual
+                    ? `單波產出正式追平 ${leadingName}（雙方皆為 ${vL.toLocaleString()}），下一關起即將展開倍數反超！`
+                    : `單波產出正式反超 ${leadingName}（左 ${vL.toLocaleString()} vs 右 ${vR.toLocaleString()}）！`;
+
                 const banner = document.getElementById('teachingBanner');
-                const bannerText = document.getElementById('teachingBannerText');
-                bannerText.textContent = `課堂觀察點：目前已進入第 n = 12 回合！左賽道 n=12 單回產出為 ${leftV12.toLocaleString()}，右賽道 n=12 單回產出為 ${rightV12.toLocaleString()}。請學生預測接下來誰會率先衝破終點？`;
+                document.getElementById('teachingBannerText').textContent =
+                    `⚡ 黃金交叉觀察點 (n = ${crossN})：當雙方推進至第 ${crossN} 關時，前期落後的${trailingName}${actionDesc} 目前左方在第 ${leftTrack.n} 關、右方在第 ${rightTrack.n} 關，請預測誰會先抵達 FINISH？`;
                 banner.classList.remove('hidden');
             }
         }
 
-        // 繪製單一賽道
         function drawTrack(track, xOffset, trackWidth, canvasHeight) {
             const centerX = xOffset + trackWidth / 2;
             const barWidth = trackWidth * 0.82;
             const barStartX = centerX - barWidth / 2;
-            const barHeight = Math.min(13, Math.max(7, Math.floor(320 / track.stages.length)));
             const totalStages = track.stages.length;
+            const finishY = canvasHeight - 38;
+            const availableH = Math.max(120, finishY - 44 - 26);
+            const gap = availableH / Math.max(1, totalStages);
+            const barHeight = Math.min(11, Math.max(5.5, gap * 0.36));
 
-            // 1. 繪製每一關的橫向進度條
             for (let i = track.currentStageIndex; i < totalStages; i++) {
                 const st = track.stages[i];
+                if (st.remaining <= 0) continue;
+
                 const y = getStageY(i, totalStages, canvasHeight);
                 const isCurrent = (i === track.currentStageIndex);
+                const isCrossoverStage = detectedCrossoverInfo && (i + 1 === detectedCrossoverInfo.n);
 
-                // 繪製底槽 (深灰色膠囊)
-                ctx.fillStyle = '#232634';
+                ctx.fillStyle = '#252736';
                 ctx.beginPath();
                 ctx.roundRect(barStartX, y, barWidth, barHeight, barHeight / 2);
                 ctx.fill();
 
-                // 繪製剩餘血量條
                 const ratio = Math.max(0, Math.min(1, st.remaining / st.max));
                 if (ratio > 0) {
                     ctx.save();
                     ctx.fillStyle = track.color;
                     if (isCurrent) {
                         ctx.shadowColor = track.color;
-                        ctx.shadowBlur = 10;
+                        ctx.shadowBlur = 9;
                     } else {
-                        ctx.globalAlpha = 0.85;
+                        ctx.globalAlpha = 0.88;
                     }
                     ctx.beginPath();
                     ctx.roundRect(barStartX, y, Math.max(barHeight, barWidth * ratio), barHeight, barHeight / 2);
@@ -1037,27 +1500,27 @@
                     ctx.restore();
                 }
 
-                // 繪製關卡編號 (左側小字) 與 數值文字 (中央下緣)
-                ctx.font = '600 10px "JetBrains Mono", monospace';
-                ctx.fillStyle = '#64748b';
-                ctx.textAlign = 'left';
-                ctx.fillText(String(i + 1).padStart(2, '0'), barStartX, y + barHeight + 13);
+                const fontSize = Math.min(11, Math.max(8.5, gap * 0.34));
+                const textY = y + barHeight + fontSize + 1.5;
 
-                ctx.font = isCurrent ? '700 11.5px "JetBrains Mono", monospace' : '500 11px "JetBrains Mono", monospace';
+                ctx.font = `600 ${Math.max(8, fontSize - 1.5)}px "JetBrains Mono", monospace`;
+                ctx.fillStyle = isCrossoverStage ? '#fbbf24' : '#64748b';
+                ctx.textAlign = 'left';
+                ctx.fillText(String(i + 1).padStart(2, '0') + (isCrossoverStage ? '⚡' : ''), barStartX, textY);
+
+                ctx.font = `${isCurrent ? '700' : '500'} ${fontSize}px "JetBrains Mono", monospace`;
                 ctx.fillStyle = isCurrent ? '#f8fafc' : '#cbd5e1';
                 ctx.textAlign = 'center';
 
                 const remFormatted = Math.ceil(st.remaining).toLocaleString();
                 const maxFormatted = st.max.toLocaleString();
-                const labelText = isCurrent ? `${remFormatted} / ${maxFormatted}` : maxFormatted;
-                ctx.fillText(labelText, centerX, y + barHeight + 13);
+                ctx.fillText(isCurrent ? `${remFormatted} / ${maxFormatted}` : maxFormatted, centerX, textY);
             }
 
-            // 2. 繪製落下中的球體
             ctx.save();
             ctx.fillStyle = track.color;
             ctx.shadowColor = track.color;
-            ctx.shadowBlur = track.mode === 'power' ? 14 : 6;
+            ctx.shadowBlur = track.mode === 'power' ? 12 : 5;
             for (const b of track.balls) {
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
@@ -1065,7 +1528,6 @@
             }
             ctx.restore();
 
-            // 3. 繪製撞擊粒子特效
             ctx.save();
             ctx.fillStyle = track.color;
             for (const p of track.particles) {
@@ -1076,8 +1538,6 @@
             }
             ctx.restore();
 
-            // 4. 繪製底部 FINISH 終點線
-            const finishY = canvasHeight - 48;
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -1085,30 +1545,29 @@
             ctx.lineTo(barStartX + barWidth, finishY);
             ctx.stroke();
 
-            ctx.font = '600 11px "Inter", sans-serif';
+            ctx.font = '600 10.5px "Inter", sans-serif';
             ctx.fillStyle = '#94a3b8';
             ctx.textAlign = 'center';
-            ctx.fillText('FINISH', centerX, finishY + 20);
+            ctx.fillText('FINISH', centerX, finishY + 16);
 
-            // 5. 若該賽道獲勝，繪製 WINNER 霓虹方框 (完全重現影片結尾效果)
             if (track.isWinner) {
-                const boxW = Math.min(200, barWidth * 0.75);
-                const boxH = 42;
+                const boxW = Math.min(180, barWidth * 0.72);
+                const boxH = 38;
                 const boxX = centerX - boxW / 2;
-                const boxY = finishY - 62;
+                const boxY = finishY - 54;
 
                 ctx.save();
                 ctx.strokeStyle = track.color;
                 ctx.lineWidth = 2;
                 ctx.shadowColor = track.color;
                 ctx.shadowBlur = 16;
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillStyle = 'rgba(10, 12, 20, 0.92)';
                 ctx.beginPath();
-                ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+                ctx.roundRect(boxX, boxY, boxW, boxH, 7);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.font = '800 18px "Inter", sans-serif';
+                ctx.font = '800 16px "Inter", sans-serif';
                 ctx.fillStyle = track.color;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -1117,73 +1576,415 @@
             }
         }
 
+        function formatSimTime(sec) {
+            const mins = Math.floor(sec / 60);
+            const remSec = (sec % 60).toFixed(1).padStart(4, '0');
+            return `${String(mins).padStart(2, '0')}:${remSec}`;
+        }
+
+        /**************************************************************************
+         * 8. 修正四：賽前導覽「非劇透局部追趕示範」與「雙模式發射機制」動態模擬器
+         * ------------------------------------------------------------------------
+         * (A) previewCrossoverCanvas: 演示 2^(n-1) vs 10n 在 n=6 ~ 8 的黃金交叉瞬間與追趕，
+         *     在抵達終點前自動淡出重播，保留「到底來不來得及逆轉」的懸念！
+         * (B) previewVideoMechCanvas & previewMathMechCanvas: 僅演示發射頻率機制，不顯示勝負。
+         **************************************************************************/
+        const crossoverDemo = {
+            t: 0,
+            duration: 9.5, // 9.5 秒循環一次局部片段
+            leftStage: 0,  // 對應 n=6 (32), n=7 (64), n=8 (128)
+            rightStage: 1, // 紫方一開始領先 1 關：n=7 (70), n=8 (80)
+            leftRem: 120,
+            rightRem: 240,
+            leftBalls: [],
+            rightBalls: [],
+            leftWaveClock: 0,
+            rightWaveClock: 0,
+
+            reset() {
+                this.t = 0;
+                this.leftStage = 0;  // 關卡 0: n=6 (V=32, 目標 120), 關卡 1: n=7 (V=64, 目標 240), 關卡 2: n=8 (V=128, 目標 500)
+                this.rightStage = 1; // 紫方已先破完關卡 0，從關卡 1 (n=7, V=70, 目標 240) 開始
+                this.leftRem = 120;
+                this.rightRem = 240;
+                this.leftBalls = [];
+                this.rightBalls = [];
+                this.leftWaveClock = 0.6;
+                this.rightWaveClock = 0.6;
+            }
+        };
+        crossoverDemo.reset();
+
+        const mechDemo = {
+            t: 0,
+            videoLeftBalls: [],
+            videoRightBalls: [],
+            videoLeftClock: 0.5,
+            videoRightClock: 0.7,
+            mathLeftBalls: [],
+            mathRightBalls: [],
+            mathSyncClock: 0.65,
+            mathWaveCount: 0,
+            pulseAlpha: 0
+        };
+
+        function updateAndDrawIntroPreviews(dt) {
+            const modal = document.getElementById('introModal');
+            if (!modal || modal.classList.contains('hidden')) return;
+
+            drawCrossoverSnippetCanvas(dt);
+            drawMechanismComparisonCanvases(dt);
+        }
+
+        // (A) 繪製「示範數列 2^(n-1) vs 10n 在黃金交叉瞬間 (n=6→8)」局部追趕片段 (絕不播到終點)
+        function drawCrossoverSnippetCanvas(dt) {
+            const c = document.getElementById('previewCrossoverCanvas');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = c.getBoundingClientRect();
+            if (rect.width === 0) return;
+            if (c.width !== Math.floor(rect.width * dpr) || c.height !== Math.floor(rect.height * dpr)) {
+                c.width = Math.max(1, Math.floor(rect.width * dpr));
+                c.height = Math.max(1, Math.floor(rect.height * dpr));
+            }
+            const pctx = c.getContext('2d');
+            pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const w = rect.width;
+            const h = rect.height;
+            const halfW = w / 2;
+
+            crossoverDemo.t += dt;
+            if (crossoverDemo.t >= crossoverDemo.duration) {
+                crossoverDemo.reset();
+            }
+
+            const stageTargets = [120, 240, 500];
+            const stageNs = [6, 7, 8];
+            const leftVals = [32, 64, 128]; // 2^(n-1) for n=6,7,8
+            const rightVals = [60, 70, 80]; // 10n for n=6,7,8
+
+            const getBarY = (idx) => 48 + idx * 34;
+
+            // 發射波次更新
+            crossoverDemo.leftWaveClock += dt;
+            if (crossoverDemo.leftWaveClock >= 0.65 && crossoverDemo.leftStage < 3) {
+                crossoverDemo.leftWaveClock = 0;
+                const targetY = getBarY(crossoverDemo.leftStage);
+                const vL = leftVals[crossoverDemo.leftStage];
+                const count = Math.min(28, Math.floor(vL / 2));
+                const dmg = vL / count;
+                for (let i = 0; i < count; i++) {
+                    crossoverDemo.leftBalls.push({
+                        x: halfW * 0.14 + Math.random() * (halfW * 0.72),
+                        y: targetY - 14 - (i % 2) * 8,
+                        vy: 38 + Math.random() * 15,
+                        dmg
+                    });
+                }
+            }
+
+            crossoverDemo.rightWaveClock += dt;
+            if (crossoverDemo.rightWaveClock >= 0.65 && crossoverDemo.rightStage < 3) {
+                crossoverDemo.rightWaveClock = 0;
+                const targetY = getBarY(crossoverDemo.rightStage);
+                const vR = rightVals[crossoverDemo.rightStage];
+                crossoverDemo.rightBalls.push({
+                    x: halfW + halfW / 2,
+                    y: targetY - 26,
+                    vy: 52,
+                    dmg: vR
+                });
+            }
+
+            // 更新左球
+            for (let i = crossoverDemo.leftBalls.length - 1; i >= 0; i--) {
+                const b = crossoverDemo.leftBalls[i];
+                b.y += b.vy * dt;
+                const ty = getBarY(crossoverDemo.leftStage);
+                if (b.y >= ty) {
+                    crossoverDemo.leftRem = Math.max(0, crossoverDemo.leftRem - b.dmg);
+                    crossoverDemo.leftBalls.splice(i, 1);
+                    if (crossoverDemo.leftRem <= 0.1 && crossoverDemo.leftStage < 2) {
+                        crossoverDemo.leftStage++;
+                        crossoverDemo.leftRem = stageTargets[crossoverDemo.leftStage];
+                        crossoverDemo.leftBalls = [];
+                        break;
+                    }
+                }
+            }
+
+            // 更新右球
+            for (let i = crossoverDemo.rightBalls.length - 1; i >= 0; i--) {
+                const b = crossoverDemo.rightBalls[i];
+                b.y += b.vy * dt;
+                const ty = getBarY(crossoverDemo.rightStage);
+                if (b.y >= ty) {
+                    crossoverDemo.rightRem = Math.max(0, crossoverDemo.rightRem - b.dmg);
+                    crossoverDemo.rightBalls.splice(i, 1);
+                    if (crossoverDemo.rightRem <= 0.1 && crossoverDemo.rightStage < 2) {
+                        crossoverDemo.rightStage++;
+                        crossoverDemo.rightRem = stageTargets[crossoverDemo.rightStage];
+                        crossoverDemo.rightBalls = [];
+                        break;
+                    }
+                }
+            }
+
+            // 繪製背景與分界線
+            pctx.clearRect(0, 0, w, h);
+            pctx.strokeStyle = '#1e293b';
+            pctx.beginPath();
+            pctx.moveTo(halfW, 0);
+            pctx.lineTo(halfW, h);
+            pctx.stroke();
+
+            // 頂部即時狀態列
+            const curLN = stageNs[crossoverDemo.leftStage];
+            const curLV = leftVals[crossoverDemo.leftStage];
+            const curRN = stageNs[crossoverDemo.rightStage];
+            const curRV = rightVals[crossoverDemo.rightStage];
+
+            pctx.font = '700 11px "JetBrains Mono", monospace';
+            pctx.fillStyle = '#a3e635';
+            pctx.textAlign = 'center';
+            pctx.fillText(`綠隊 2^(n-1)｜n=${curLN} 單波=${curLV}`, halfW / 2, 18);
+
+            pctx.fillStyle = '#c084fc';
+            pctx.fillText(`紫隊 10n｜n=${curRN} 單波=${curRV}`, halfW + halfW / 2, 18);
+
+            // 標示是否已經反超
+            if (curLV > curRV) {
+                pctx.fillStyle = '#fbbf24';
+                pctx.font = '700 10px "Inter", sans-serif';
+                pctx.fillText('🔥 綠隊單波已反超 (128 > 80)，正在狂追前期落後的進度！', halfW / 2, 32);
+            } else {
+                pctx.fillStyle = '#94a3b8';
+                pctx.font = '600 10px "Inter", sans-serif';
+                pctx.fillText('⏳ 綠隊前期落後 1 關，即將迎來黃金交叉...', halfW / 2, 32);
+            }
+
+            pctx.fillStyle = '#94a3b8';
+            pctx.font = '600 10px "Inter", sans-serif';
+            pctx.fillText('✨ 紫隊憑藉前期優勢先到 n=7, 8，但單波成長變慢', halfW + halfW / 2, 32);
+
+            // 繪製 3 條局部關卡 (n=6, 7, 8)
+            const drawSideStages = (isLeft, curIdx, curRem, balls, color, xOff) => {
+                const bw = halfW * 0.76;
+                const bx = xOff + (halfW - bw) / 2;
+
+                for (let idx = curIdx; idx < 3; idx++) {
+                    const y = getBarY(idx);
+                    const maxV = stageTargets[idx];
+                    const remV = (idx === curIdx) ? curRem : maxV;
+                    const ratio = Math.max(0, Math.min(1, remV / maxV));
+
+                    pctx.fillStyle = '#1e2230';
+                    pctx.beginPath();
+                    pctx.roundRect(bx, y, bw, 7, 3.5);
+                    pctx.fill();
+
+                    pctx.fillStyle = color;
+                    pctx.beginPath();
+                    pctx.roundRect(bx, y, Math.max(7, bw * ratio), 7, 3.5);
+                    pctx.fill();
+
+                    pctx.font = '600 9.5px "JetBrains Mono", monospace';
+                    pctx.fillStyle = idx === curIdx ? '#f8fafc' : '#64748b';
+                    pctx.textAlign = 'center';
+                    pctx.fillText(`第 ${stageNs[idx]} 關: ${Math.ceil(remV)} / ${maxV}`, xOff + halfW / 2, y + 18);
+                }
+
+                pctx.fillStyle = color;
+                for (const b of balls) {
+                    pctx.beginPath();
+                    pctx.arc(b.x, b.y, isLeft ? 2.6 : 4.2, 0, Math.PI * 2);
+                    pctx.fill();
+                }
+            };
+
+            drawSideStages(true, crossoverDemo.leftStage, crossoverDemo.leftRem, crossoverDemo.leftBalls, '#a3e635', 0);
+            drawSideStages(false, crossoverDemo.rightStage, crossoverDemo.rightRem, crossoverDemo.rightBalls, '#c084fc', halfW);
+
+            // 底部懸念遮罩橫幅 (不顯示誰先到終點)
+            const bannerY = h - 24;
+            pctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            pctx.fillRect(0, bannerY, w, 24);
+            pctx.fillStyle = '#fbbf24';
+            pctx.font = '700 10.5px "Inter", sans-serif';
+            pctx.textAlign = 'center';
+            pctx.fillText('❓ 局部示範到此暫停重播：後續關卡誰會先撞破終點線？請在下方選擇模式親自驗證！', w / 2, bannerY + 15);
+        }
+
+        // (B) 繪製兩種競賽模式的「發射頻率機制微縮圖」 (僅展示發射節奏差異，無勝負結果)
+        function drawMechanismComparisonCanvases(dt) {
+            const cVideo = document.getElementById('previewVideoMechCanvas');
+            const cMath = document.getElementById('previewMathMechCanvas');
+            if (!cVideo || !cMath) return;
+
+            mechDemo.t += dt;
+
+            // 1. 更新原影片機制微縮圖 (左方雙排密集短距 vs 右方高處長距)
+            mechDemo.videoLeftClock += dt;
+            if (mechDemo.videoLeftClock >= 0.48) {
+                mechDemo.videoLeftClock = 0;
+                for (let i = 0; i < 22; i++) {
+                    mechDemo.videoLeftBalls.push({
+                        rx: 0.12 + Math.random() * 0.76,
+                        y: 44 + (i % 2) * 9 + (Math.random() - 0.5) * 3,
+                        vy: 42 + Math.random() * 18
+                    });
+                }
+            }
+            mechDemo.videoRightClock += dt;
+            if (mechDemo.videoRightClock >= 0.75) {
+                mechDemo.videoRightClock = 0;
+                mechDemo.videoRightBalls.push({ rx: 0.5, y: 18, vy: 65 });
+            }
+
+            // 2. 更新純數學 1:1 同步回合制微縮圖
+            mechDemo.mathSyncClock += dt;
+            mechDemo.pulseAlpha = Math.max(0, mechDemo.pulseAlpha - dt * 2.5);
+            if (mechDemo.mathSyncClock >= 0.70) {
+                mechDemo.mathSyncClock = 0;
+                mechDemo.mathWaveCount = (mechDemo.mathWaveCount % 9) + 1;
+                mechDemo.pulseAlpha = 1;
+                for (let i = 0; i < 18; i++) {
+                    mechDemo.mathLeftBalls.push({
+                        rx: 0.14 + (i / 17) * 0.72,
+                        y: 26 + (i % 2) * 6,
+                        vy: 68
+                    });
+                }
+                mechDemo.mathRightBalls.push({ rx: 0.5, y: 26, vy: 68 });
+            }
+
+            const renderMechCanvas = (canvasEl, leftBalls, rightBalls, isSyncMode) => {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvasEl.getBoundingClientRect();
+                if (rect.width === 0) return;
+                if (canvasEl.width !== Math.floor(rect.width * dpr) || canvasEl.height !== Math.floor(rect.height * dpr)) {
+                    canvasEl.width = Math.max(1, Math.floor(rect.width * dpr));
+                    canvasEl.height = Math.max(1, Math.floor(rect.height * dpr));
+                }
+                const mctx = canvasEl.getContext('2d');
+                mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                const w = rect.width;
+                const h = rect.height;
+                const halfW = w / 2;
+                const targetY = h - 22;
+
+                mctx.clearRect(0, 0, w, h);
+                mctx.strokeStyle = '#1e293b';
+                mctx.beginPath();
+                mctx.moveTo(halfW, 0);
+                mctx.lineTo(halfW, h);
+                mctx.stroke();
+
+                // 繪製底部無限防護目標條
+                const bw = halfW * 0.76;
+                mctx.fillStyle = '#a3e635';
+                mctx.beginPath();
+                mctx.roundRect((halfW - bw) / 2, targetY, bw, 6, 3);
+                mctx.fill();
+
+                mctx.fillStyle = '#c084fc';
+                mctx.beginPath();
+                mctx.roundRect(halfW + (halfW - bw) / 2, targetY, bw, 6, 3);
+                mctx.fill();
+
+                // 更新與繪製球體
+                mctx.fillStyle = '#a3e635';
+                for (let i = leftBalls.length - 1; i >= 0; i--) {
+                    const b = leftBalls[i];
+                    b.y += b.vy * dt;
+                    if (b.y >= targetY) {
+                        leftBalls.splice(i, 1);
+                        continue;
+                    }
+                    mctx.beginPath();
+                    mctx.arc(b.rx * halfW, b.y, 2.5, 0, Math.PI * 2);
+                    mctx.fill();
+                }
+
+                mctx.fillStyle = '#c084fc';
+                for (let i = rightBalls.length - 1; i >= 0; i--) {
+                    const b = rightBalls[i];
+                    b.y += b.vy * dt;
+                    if (b.y >= targetY) {
+                        rightBalls.splice(i, 1);
+                        continue;
+                    }
+                    mctx.beginPath();
+                    mctx.arc(halfW + b.rx * halfW, b.y, 4.2, 0, Math.PI * 2);
+                    mctx.fill();
+                }
+
+                // 標註說明
+                mctx.font = '600 10px "JetBrains Mono", monospace';
+                mctx.textAlign = 'center';
+                if (isSyncMode) {
+                    if (mechDemo.pulseAlpha > 0.05) {
+                        mctx.fillStyle = `rgba(251, 191, 36, ${mechDemo.pulseAlpha})`;
+                        mctx.fillText(`🔔 同步發射第 ${mechDemo.mathWaveCount} 波！`, halfW, 14);
+                    }
+                    mctx.fillStyle = '#cbd5e1';
+                    mctx.fillText('左方第 k 波', halfW / 2, h - 5);
+                    mctx.fillText('右方第 k 波 (1:1 同步)', halfW + halfW / 2, h - 5);
+                } else {
+                    mctx.fillStyle = '#a3e635';
+                    mctx.fillText('雙層密集貼近目標 (高頻連擊)', halfW / 2, h - 5);
+                    mctx.fillStyle = '#c084fc';
+                    mctx.fillText('高處單球落下 (行程較長)', halfW + halfW / 2, h - 5);
+                }
+            };
+
+            renderMechCanvas(cVideo, mechDemo.videoLeftBalls, mechDemo.videoRightBalls, false);
+            renderMechCanvas(cMath, mechDemo.mathLeftBalls, mechDemo.mathRightBalls, true);
+        }
+
         // 主動畫迴圈
         function animateLoop(now) {
             const rawDt = Math.min(0.05, (now - lastFrameTime) / 1000);
             lastFrameTime = now;
+
+            // 更新賽前導覽的示範 Canvas
+            updateAndDrawIntroPreviews(rawDt);
 
             const width = canvas.clientWidth;
             const height = canvas.clientHeight;
             const halfW = width / 2;
 
             if (isRunning) {
-                const dt = rawDt * simSpeed;
-                const simMode = document.getElementById('simEngineSelect').value;
-                const advanceOnlyOnClear = document.getElementById('chkAdvanceOnClear').checked;
+                let totalSimDt = rawDt * simSpeed;
+                const FIXED_STEP = 0.002;
 
-                updateTrack(leftTrack, dt, halfW / 2, halfW, height, simMode, advanceOnlyOnClear);
-                updateTrack(rightTrack, dt, halfW + halfW / 2, halfW, height, simMode, advanceOnlyOnClear);
+                while (totalSimDt > 0 && isRunning) {
+                    const step = Math.min(totalSimDt, FIXED_STEP);
+                    totalSimDt -= step;
 
-                // 處理回合推進與引擎同步邏輯
-                if (simMode === 'math') {
-                    // 純數學離散運算：雙方嚴格同步回合，必須雙方這波都跑完才一起結算並推進下一回合
-                    const leftDone = leftTrack.balls.length === 0;
-                    const rightDone = rightTrack.balls.length === 0;
+                    if (!raceHasWinner) {
+                        simElapsedTime += step;
+                    }
 
-                    if (leftDone && rightDone) {
-                        let shouldCheckGoldenCross = false;
+                    stepTrackPhysics(leftTrack, step, halfW / 2, halfW, height);
+                    stepTrackPhysics(rightTrack, step, halfW + halfW / 2, halfW, height);
 
-                        // 1. 結算破關 (多餘傷害在純數學回合制中會被溢出浪費)
-                        [leftTrack, rightTrack].forEach(track => {
-                            if (!track.finished && track.clearedStageThisWave) {
-                                track.currentStageIndex++;
-                                if (track.currentStageIndex >= track.stages.length) {
-                                    track.finished = true;
-                                    if (!raceHasWinner) {
-                                        raceHasWinner = true;
-                                        track.isWinner = true;
-                                        sound.playWinFanfare();
-                                    }
-                                }
-                            }
-                        });
-
-                        // 2. 推進 n 並發射下一波
-                        [leftTrack, rightTrack].forEach(track => {
-                            if (!track.finished) {
-                                if (track.clearedStageThisWave || !advanceOnlyOnClear) {
-                                    track.n++;
-                                    shouldCheckGoldenCross = true;
-                                }
-                                track.spawnWave(track.side === 'left' ? halfW / 2 : halfW + halfW / 2, halfW);
-                                track.clearedStageThisWave = false;
-                            }
-                        });
-
-                        if (shouldCheckGoldenCross) checkGoldenCrossHook();
+                    if (raceHasWinner) {
+                        const winnerTrack = leftTrack.isWinner ? leftTrack : rightTrack;
+                        if (winnerTrack.balls.length === 0 && winnerTrack.particles.length === 0) {
+                            pauseSimulation();
+                            break;
+                        }
                     }
                 }
 
-                // 如果兩邊都結束了，自動停止播放狀態
-                if (leftTrack.finished && rightTrack.finished) {
-                    pauseSimulation();
-                }
+                document.getElementById('simTimerText').textContent = formatSimTime(simElapsedTime);
             }
 
-            // 清空畫布
             ctx.clearRect(0, 0, width, height);
 
-            // 繪製中央分隔線
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -1191,7 +1992,6 @@
             ctx.lineTo(halfW, height);
             ctx.stroke();
 
-            // 繪製左右賽道
             drawTrack(leftTrack, 0, halfW, height);
             drawTrack(rightTrack, halfW, halfW, height);
 
@@ -1199,15 +1999,15 @@
         }
 
         /**************************************************************************
-         * 5. UI 互動與事件綁定
+         * 9. UI 互動、數據表零劇透切換與事件綁定
          **************************************************************************/
         function startSimulation() {
             sound.init();
-            if (leftTrack.finished && rightTrack.finished) {
+            if (raceHasWinner || (leftTrack.finished && rightTrack.finished)) {
                 resetSimulation();
             }
             isRunning = true;
-            document.getElementById('iconPlayPause').className = 'ph-fill ph-pause text-base';
+            document.getElementById('iconPlayPause').className = 'ph-fill ph-pause text-sm';
             document.getElementById('textPlayPause').textContent = '暫停競賽';
             document.getElementById('btnPlayPause').classList.replace('bg-emerald-600', 'bg-amber-600');
             document.getElementById('btnPlayPause').classList.replace('hover:bg-emerald-500', 'hover:bg-amber-500');
@@ -1215,7 +2015,7 @@
 
         function pauseSimulation() {
             isRunning = false;
-            document.getElementById('iconPlayPause').className = 'ph-fill ph-play text-base';
+            document.getElementById('iconPlayPause').className = 'ph-fill ph-play text-sm';
             document.getElementById('textPlayPause').textContent = '繼續競賽';
             document.getElementById('btnPlayPause').classList.replace('bg-amber-600', 'bg-emerald-600');
             document.getElementById('btnPlayPause').classList.replace('hover:bg-amber-500', 'hover:bg-emerald-500');
@@ -1235,57 +2035,125 @@
             document.getElementById('teachingBanner').classList.add('hidden');
             goldenCrossTriggered = false;
             raceHasWinner = false;
+            simElapsedTime = 0;
+            document.getElementById('simTimerText').textContent = '00:00.0';
 
             const milestones = parseMilestonesInput();
             renderMathFormulas();
+            updateGoldenCrossUI();
             leftTrack.reset(milestones);
             rightTrack.reset(milestones);
-            buildComparisonTable();
+            buildComparisonTable(milestones);
+            setTimeout(resizeCanvas, 20);
         }
 
-        // 生成 n = 1 ~ 16 的函數對照表
-        function buildComparisonTable() {
+        // 數據對照表：預設僅顯示單波產出與黃金交叉點，隱藏累計波數答案，點擊按鈕才揭曉
+        function buildComparisonTable(milestones) {
             const tbody = document.getElementById('comparisonTableBody');
             tbody.innerHTML = '';
+            let cumWavesL = 0, cumWavesR = 0;
+            const maxRows = Math.max(16, milestones.length);
 
-            for (let n = 1; n <= 16; n++) {
+            for (let n = 1; n <= maxRows; n++) {
                 const vL = evaluateTrackFunction('left', n);
                 const vR = evaluateTrackFunction('right', n);
-                const isEqual = (vL === vR);
+                const stageMax = milestones[n - 1] || null;
+                const isCrossRound = detectedCrossoverInfo && (detectedCrossoverInfo.n === n);
+
+                let stageCompareText = '-';
+                if (stageMax !== null) {
+                    const wavesL = Math.ceil(stageMax / vL);
+                    const wavesR = Math.ceil(stageMax / vR);
+                    cumWavesL += wavesL;
+                    cumWavesR += wavesR;
+
+                    if (revealTableWaves) {
+                        stageCompareText = `目標 ${stageMax.toLocaleString()} ｜ 左需 ${wavesL} 波 (累計 ${cumWavesL}) vs 右需 ${wavesR} 波 (累計 ${cumWavesR})`;
+                    } else {
+                        const diffDesc = vL === vR
+                            ? '⚡ 雙方單波平手！'
+                            : (vL > vR ? `左方單波領先 (+${(vL - vR).toLocaleString()})` : `右方單波領先 (+${(vR - vL).toLocaleString()})`);
+                        stageCompareText = `當關目標 ${stageMax.toLocaleString()} ｜ ${diffDesc} （所需波數已隱藏）`;
+                    }
+                } else {
+                    stageCompareText = vL === vR
+                        ? `⚡ 單波產出平手 (${vL.toLocaleString()})`
+                        : (vL > vR ? `左單波領先 +${(vL - vR).toLocaleString()}` : `右單波領先 +${(vR - vL).toLocaleString()}`);
+                }
+
                 const tr = document.createElement('tr');
-
-                if (isEqual) {
-                    tr.className = 'bg-amber-500/20 text-amber-200 font-bold';
-                } else {
-                    tr.className = 'hover:bg-slate-800/50 transition';
-                }
-
-                let statusHtml = '';
-                if (isEqual) {
-                    statusHtml = `<span class="text-amber-300">⚡ 黃金交叉平手 (${vL.toLocaleString()})</span>`;
-                } else if (vL > vR) {
-                    statusHtml = `<span class="text-lime-400">左賽道領先 +${(vL - vR).toLocaleString()}</span>`;
-                } else {
-                    statusHtml = `<span class="text-purple-400">右賽道領先 +${(vR - vL).toLocaleString()}</span>`;
-                }
+                tr.className = isCrossRound
+                    ? 'bg-amber-500/20 text-amber-200 font-bold'
+                    : (n === milestones.length ? 'bg-indigo-500/15 font-semibold' : 'hover:bg-slate-800/50 transition');
 
                 tr.innerHTML = `
-                    <td class="py-2 px-3">n = ${n}</td>
+                    <td class="py-2 px-3">n = ${n} ${isCrossRound ? '⚡' : ''}</td>
                     <td class="py-2 px-3 text-lime-300">${vL.toLocaleString()}</td>
                     <td class="py-2 px-3 text-purple-300">${vR.toLocaleString()}</td>
-                    <td class="py-2 px-3">${statusHtml}</td>
+                    <td class="py-2 px-3 text-slate-300">${stageCompareText}</td>
                 `;
                 tbody.appendChild(tr);
             }
         }
 
-        // 綁定控制列按鈕
+        document.getElementById('btnToggleRevealWaves').addEventListener('click', () => {
+            revealTableWaves = !revealTableWaves;
+            document.getElementById('iconRevealWaves').className = revealTableWaves
+                ? 'ph-fill ph-eye text-emerald-400'
+                : 'ph-fill ph-eye-slash';
+            document.getElementById('textRevealWaves').textContent = revealTableWaves
+                ? '隱藏各關所需波數 (恢復預測模式)'
+                : '揭曉各關所需波數計算 (課堂公布答案用)';
+            buildComparisonTable(parseMilestonesInput());
+        });
+
+        // 切換「橫式雙欄寬螢幕」與「直式 9:16 原影片比例」
+        document.getElementById('btnAspectToggle').addEventListener('click', () => {
+            isPortraitMode = !isPortraitMode;
+            const wrapper = document.getElementById('stageWrapper');
+            const textEl = document.getElementById('textAspect');
+            const iconEl = document.getElementById('iconAspect');
+
+            if (isPortraitMode) {
+                wrapper.classList.remove('w-full', 'max-w-6xl');
+                wrapper.classList.add('portrait-frame');
+                textEl.textContent = '切換橫式寬螢幕';
+                iconEl.className = 'ph ph-monitor text-sm text-amber-400';
+            } else {
+                wrapper.classList.remove('portrait-frame');
+                wrapper.classList.add('w-full', 'max-w-6xl');
+                textEl.textContent = '切換直式 9:16';
+                iconEl.className = 'ph ph-device-mobile text-sm text-cyan-400';
+            }
+            setTimeout(resizeCanvas, 50);
+        });
+
+        // 全螢幕播放控制
+        document.getElementById('btnFullscreen').addEventListener('click', () => {
+            const root = document.documentElement;
+            if (!document.fullscreenElement) {
+                if (root.requestFullscreen) root.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            const isFs = !!document.fullscreenElement;
+            document.getElementById('iconFullscreen').className = isFs
+                ? 'ph-bold ph-corners-in text-sm text-amber-300'
+                : 'ph-bold ph-corners-out text-sm';
+            document.getElementById('textFullscreen').textContent = isFs ? '退出全螢幕' : '全螢幕';
+            setTimeout(resizeCanvas, 80);
+        });
+
+        // 綁定控制按鈕
         document.getElementById('btnPlayPause').addEventListener('click', () => {
             if (isRunning) pauseSimulation();
             else startSimulation();
         });
-
         document.getElementById('btnReset').addEventListener('click', resetSimulation);
+        document.getElementById('simEngineSelect').addEventListener('change', resetSimulation);
 
         document.getElementById('btnResumeFromBanner').addEventListener('click', () => {
             document.getElementById('teachingBanner').classList.add('hidden');
@@ -1294,12 +2162,9 @@
 
         document.getElementById('btnMute').addEventListener('click', () => {
             sound.muted = !sound.muted;
-            const icon = document.getElementById('iconMute');
-            if (sound.muted) {
-                icon.className = 'ph-fill ph-speaker-slash text-base text-slate-500';
-            } else {
-                icon.className = 'ph-fill ph-speaker-high text-base text-amber-400';
-            }
+            document.getElementById('iconMute').className = sound.muted
+                ? 'ph-fill ph-speaker-slash text-sm text-slate-500'
+                : 'ph-fill ph-speaker-high text-sm text-amber-400';
         });
 
         document.getElementById('speedSlider').addEventListener('input', (e) => {
@@ -1307,58 +2172,75 @@
             document.getElementById('speedValue').textContent = simSpeed.toFixed(1) + 'x';
         });
 
-        // 切換設定抽屜與數據對照表
-        document.getElementById('btnToggleSettings').addEventListener('click', () => {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('hidden');
-            setTimeout(resizeCanvas, 50);
+        // 彈窗開關綁定
+        function bindModal(btnOpenId, btnCloseId, modalId) {
+            const modal = document.getElementById(modalId);
+            document.getElementById(btnOpenId).addEventListener('click', () => {
+                if (modalId === 'tableModal') buildComparisonTable(parseMilestonesInput());
+                if (modalId === 'introModal') crossoverDemo.reset();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+            document.getElementById(btnCloseId).addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+        }
+
+        bindModal('btnToggleIntro', 'btnCloseIntroTop', 'introModal');
+        bindModal('btnToggleSettings', 'btnCloseSettings', 'settingsModal');
+        bindModal('btnToggleTable', 'btnCloseTable', 'tableModal');
+
+        // 賽前導覽選擇模式按鈕
+        document.getElementById('btnSelectVideoMode').addEventListener('click', () => {
+            document.getElementById('simEngineSelect').value = 'video';
+            document.getElementById('introModal').classList.add('hidden');
+            document.getElementById('introModal').classList.remove('flex');
+            resetSimulation();
         });
 
-        document.getElementById('btnToggleTable').addEventListener('click', () => {
-            buildComparisonTable();
-            const modal = document.getElementById('tableModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        document.getElementById('btnSelectMathMode').addEventListener('click', () => {
+            document.getElementById('simEngineSelect').value = 'math';
+            document.getElementById('introModal').classList.add('hidden');
+            document.getElementById('introModal').classList.remove('flex');
+            resetSimulation();
         });
 
-        document.getElementById('btnCloseTable').addEventListener('click', () => {
-            const modal = document.getElementById('tableModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        });
-
-        // 處理自訂函數輸入框展開/收合
+        // 自訂函數欄位切換與即時語法檢查
         ['left', 'right'].forEach(side => {
             const selectEl = document.getElementById(`${side}FuncSelect`);
             selectEl.addEventListener('change', () => {
                 const val = selectEl.value;
-                document.getElementById(`${side}CustomExpBox`).classList.toggle('hidden', val !== 'custom_exp');
-                document.getElementById(`${side}CustomRecBox`).classList.toggle('hidden', val !== 'custom_rec');
                 document.getElementById(`${side}ArithmeticBox`).classList.toggle('hidden', val !== 'arithmetic');
                 document.getElementById(`${side}GeometricBox`).classList.toggle('hidden', val !== 'geometric');
-                resetSimulation();
+                document.getElementById(`${side}CustomExpBox`).classList.toggle('hidden', val !== 'custom_exp');
+                document.getElementById(`${side}CustomRecBox`).classList.toggle('hidden', val !== 'custom_rec');
+                if (val === 'custom_exp') updateCustomExprPreviewUI(side);
             });
 
-            document.getElementById(`${side}ModeSelect`).addEventListener('change', resetSimulation);
+            const customInputEl = document.getElementById(`${side}CustomExpInput`);
+            customInputEl.addEventListener('input', () => updateCustomExprPreviewUI(side));
         });
 
-        // 綁定預設關卡模板按鈕
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const presetKey = btn.getAttribute('data-preset');
-                const arr = PRESET_MILESTONES[presetKey];
-                if (arr) {
-                    document.getElementById('milestonesInput').value = arr.join(', ');
-                    resetSimulation();
+                const key = btn.getAttribute('data-preset');
+                if (PRESET_MILESTONES[key]) {
+                    document.getElementById('milestonesInput').value = PRESET_MILESTONES[key].join(', ');
                 }
             });
         });
 
-        document.getElementById('btnApplySettings').addEventListener('click', resetSimulation);
+        document.getElementById('btnApplySettings').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('hidden');
+            document.getElementById('settingsModal').classList.remove('flex');
+            resetSimulation();
+        });
 
-        // 初始化啟動
         window.onload = function () {
             resizeCanvas();
+            updateCustomExprPreviewUI('left');
+            updateCustomExprPreviewUI('right');
             resetSimulation();
             requestAnimationFrame(animateLoop);
         };
