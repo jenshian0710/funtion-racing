@@ -46,7 +46,7 @@
             text-shadow: 0 0 16px var(--right-glow);
         }
 
-        /* KaTeX 數學公式字體自適應 (針對手機螢幕縮小高度避免擠壓畫布) */
+        /* KaTeX 數學公式字體自適應 */
         .math-display .katex {
             font-size: clamp(1.25rem, 2.6vh, 2.5rem) !important;
         }
@@ -76,10 +76,10 @@
 
         @keyframes recPulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.45; transform: scale(0.92); }
+            50% { opacity: 0.4; transform: scale(0.9); }
         }
         .rec-dot {
-            animation: recPulse 1.1s infinite ease-in-out;
+            animation: recPulse 1s infinite ease-in-out;
         }
 
         /* 自訂捲軸 */
@@ -98,7 +98,10 @@
 </head>
 <body id="appRoot" class="flex flex-col justify-between select-none bg-[#050608]">
 
-    <!-- 1. 頂部標題與快速導覽列 (全螢幕時或手機收合時可自動隱藏以釋放空間) -->
+    <!-- 隱藏掛載於 DOM 的 540x960 錄影專用合成畫布 (解決 iOS Safari 離屏 Canvas 無法 captureStream 的問題) -->
+    <canvas id=" compositeExportCanvas" width="540" height="960" class="fixed -left-[9999px] -top-[9999px] pointer-events-none opacity-0"></canvas>
+
+    <!-- 1. 頂部標題與快速導覽列 -->
     <header id="topHeaderBar" class="w-full bg-[#0b0d14]/95 border-b border-slate-800/80 px-2.5 sm:px-5 py-1 sm:py-1.5 shrink-0 z-30 transition-all">
         <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-1.5">
             <!-- 左側：設計者與影片出處 -->
@@ -123,9 +126,9 @@
 
             <!-- 右側：功能面板按鈕 -->
             <div class="flex items-center gap-1 shrink-0">
-                <button id="btnToggleIntro" class="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-semibold border border-amber-500/40 transition flex items-center gap-1" title="開啟賽前規則導覽與雙模式機制動畫比較">
+                <button id="btnToggleIntro" class="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-semibold border border-amber-500/40 transition flex items-center gap-1" title="開啟賽前極簡導覽">
                     <i class="ph-fill ph-compass text-sm"></i>
-                    <span class="hidden xs:inline sm:inline">賽前導覽</span>
+                    <span>規則導覽</span>
                 </button>
                 <button id="btnToggleSettings" class="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] sm:text-xs font-medium border border-slate-700 transition flex items-center gap-1" title="自訂函數與關卡設定">
                     <i class="ph ph-sliders text-sm text-indigo-400"></i>
@@ -140,11 +143,11 @@
         </div>
     </header>
 
-    <!-- 2. 次級教學控制列 (手機版採用「主列 + 可摺疊進階列」，徹底解決手機全螢幕被控制項塞滿的問題) -->
+    <!-- 2. 次級教學控制列 (手機版採用「主列 + 可摺疊進階列」) -->
     <section class="w-full bg-[#10131d] border-b border-slate-800/80 px-2 sm:px-5 py-1 sm:py-1.5 shrink-0 z-20">
         <div class="max-w-[1600px] mx-auto flex flex-col gap-1.5 text-xs">
             
-            <!-- 第一行：核心操作列 (永遠保持單行緊湊，手機不折行) -->
+            <!-- 第一行：核心操作列 -->
             <div class="flex items-center justify-between gap-1 sm:gap-2">
                 <!-- 左側：播放、重置、音效、計時 -->
                 <div class="flex items-center gap-1 sm:gap-1.5">
@@ -166,34 +169,33 @@
                     </div>
                 </div>
 
-                <!-- 中間偏右：錄製並匯出影片按鈕 + 電腦版直接顯示進階控制 -->
+                <!-- 右側：匯出影片 + 手機展開設定 + 全螢幕 -->
                 <div class="flex items-center gap-1 sm:gap-2">
-                    <!-- 新增：匯出影片按鈕 -->
-                    <button id="btnOpenExportModal" class="px-2 sm:px-3 py-1 rounded-lg bg-rose-600/25 hover:bg-rose-600/40 text-rose-200 border border-rose-500/40 font-semibold transition flex items-center gap-1 shrink-0" title="將競賽過程（含上方公式儀表板與音效）匯出為影片檔 (.mp4 / .webm)">
+                    <button id="btnOpenExportModal" class="px-2 sm:px-3 py-1 rounded-lg bg-rose-600/25 hover:bg-rose-600/40 text-rose-200 border border-rose-500/40 font-semibold transition flex items-center gap-1 shrink-0" title="錄製並匯出競賽影片 (.mp4 / .webm)">
                         <span id="exportStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
                         <span id="textExportVideo" class="text-[11px] sm:text-xs">匯出影片</span>
                     </button>
 
                     <!-- 手機版專用：展開/收合「速度與模式列」按鈕 -->
-                    <button id="btnMobileDrawerToggle" class="lg:hidden px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-medium transition flex items-center gap-1 shrink-0" title="展開/收合模式與速度設定">
+                    <button id="btnMobileDrawerToggle" class="lg:hidden px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-medium transition flex items-center gap-1 shrink-0">
                         <i class="ph ph-faders text-sm"></i>
                         <span class="text-[11px]">模式/速度</span>
                         <i id="iconMobileDrawer" class="ph ph-caret-down text-xs"></i>
                     </button>
 
                     <!-- 螢幕比例與全螢幕切換 -->
-                    <button id="btnAspectToggle" class="hidden md:flex px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition items-center gap-1 shrink-0" title="切換「橫式寬螢幕滿版」或「直式 9:16 原影片比例」">
+                    <button id="btnAspectToggle" class="hidden md:flex px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition items-center gap-1 shrink-0" title="切換橫式或直式 9:16 比例">
                         <i id="iconAspect" class="ph ph-device-mobile text-sm text-cyan-400"></i>
                         <span id="textAspect">直式 9:16</span>
                     </button>
-                    <button id="btnFullscreen" class="px-2 sm:px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 font-semibold transition flex items-center gap-1 shrink-0" title="全螢幕播放 (自動隱藏多餘選單以最大化賽道)">
+                    <button id="btnFullscreen" class="px-2 sm:px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 font-semibold transition flex items-center gap-1 shrink-0" title="全螢幕播放">
                         <i id="iconFullscreen" class="ph-bold ph-corners-out text-sm"></i>
                         <span id="textFullscreen" class="hidden sm:inline">全螢幕</span>
                     </button>
                 </div>
             </div>
 
-            <!-- 第二行：速度、競賽模式與黃金交叉設定 (電腦版常駐顯示；手機版預設收合，點擊「模式/速度」才展開，不佔畫布高度！) -->
+            <!-- 第二行：速度、競賽模式與黃金交叉設定 -->
             <div id="secondaryControlsRow" class="hidden lg:flex flex-wrap items-center justify-between gap-2 pt-1 lg:pt-0 border-t border-slate-800/80 lg:border-none">
                 <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
                     <!-- 速度滑桿 -->
@@ -222,15 +224,15 @@
         </div>
     </section>
 
-    <!-- 3. 錄影進行中狀態提示列 (當正在錄製匯出影片時顯示) -->
+    <!-- 3. 錄影進行中狀態提示列 -->
     <div id="recordingBanner" class="hidden w-full bg-rose-600/25 border-b border-rose-500/50 px-3 py-1 text-center shrink-0 z-20">
-        <div class="max-w-4xl mx-auto flex items-center justify-center gap-2 text-xs">
+        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-2 text-xs">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-500 rec-dot inline-block"></span>
-            <span id="recordingBannerText" class="text-rose-200 font-semibold">
-                正在錄製高清競賽影片（含上方公式儀表板與音效）... 比賽分出勝負後將自動儲存下載！
+            <span id="recordingBannerText" class="text-rose-200 font-semibold text-[11px] sm:text-xs">
+                正在錄製影片... 分出勝負後將自動彈出預覽與儲存視窗！
             </span>
             <button id="btnStopRecordingNow" class="px-2.5 py-0.5 rounded bg-rose-500 hover:bg-rose-400 text-white font-bold text-[11px] transition shadow">
-                立即停止並下載檔案
+                立即完成並預覽
             </button>
         </div>
     </div>
@@ -248,13 +250,12 @@
         </div>
     </div>
 
-    <!-- 5. 主競賽舞台外框 (flex-1 min-h-0 確保在手機全螢幕下取得最大剩餘高度) -->
+    <!-- 5. 主競賽舞台外框 -->
     <main class="flex-1 w-full min-h-0 overflow-hidden flex items-center justify-center p-0.5 sm:p-2 bg-[#050608]">
         <div id="stageWrapper" class="w-full max-w-6xl h-full flex flex-col bg-[#030305] sm:rounded-xl border-x sm:border border-slate-800/80 overflow-hidden shadow-2xl">
             
-            <!-- 頂部：雙欄數學公式與即時儀表板 (手機版高度緊湊化，把空間留給下方賽道) -->
+            <!-- 頂部：雙欄數學公式與即時儀表板 -->
             <div id="dashboardHeader" class="w-full grid grid-cols-2 border-b border-slate-800/90 py-1 sm:py-2.5 px-1.5 sm:px-2 shrink-0 relative bg-[#06070b]">
-                <!-- 中央垂直分隔線 -->
                 <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-800 -translate-x-1/2"></div>
 
                 <!-- 左賽道儀表板 -->
@@ -308,212 +309,200 @@
                 </div>
             </div>
 
-            <!-- 底部：Canvas 視覺化賽道 (保證擁有充裕高度呈現全部關卡與落球動畫) -->
-            <div id="canvasContainer" class="w-full flex-1 relative min-h-[220px]">
+            <!-- 底部：Canvas 視覺化賽道 -->
+            <div id="canvasContainer" class="w-full flex-1 relative min-h-[200px]">
                 <canvas id="raceCanvas" class="w-full h-full block"></canvas>
             </div>
         </div>
     </main>
 
-    <!-- 6. 新增彈出式面板：「錄製並匯出競賽影片」 (方便對照比較兩種模式或不同函數) -->
-    <div id="exportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-6">
-        <div class="bg-[#121521] border border-rose-500/40 rounded-2xl max-w-lg w-full flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
+    <!-- 6. 彈出式面板：「賽前極簡視覺導覽」 (大幅精簡文字，動畫一目了然，學生 5 秒即可讀完進入挑戰) -->
+    <div id="introModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-2.5 sm:p-5">
+        <div class="bg-[#111420] border border-amber-500/40 rounded-2xl max-w-4xl w-full max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- 精簡標題列 -->
+            <div class="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
                 <div class="flex items-center gap-2">
-                    <i class="ph-fill ph-video-camera text-rose-400 text-xl"></i>
-                    <h3 class="font-bold text-white text-base sm:text-lg">錄製並匯出競賽影片 (9:16 完整畫面)</h3>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center gap-1">
+                        <i class="ph-fill ph-lightning"></i> 30秒規則速覽
+                    </span>
+                    <h2 class="font-extrabold text-white text-sm sm:text-base">
+                        慢熱暴增 <code class="text-lime-400">Fₙ</code> vs 穩定平方 <code class="text-purple-400">n²</code>，誰會先撞破終點？
+                    </h2>
                 </div>
-                <button id="btnCloseExportModal" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <i class="ph ph-x text-lg"></i>
+                <button id="btnCloseIntroTop" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="略過導覽">
+                    <i class="ph ph-x text-base"></i>
                 </button>
             </div>
 
-            <div class="p-5 space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
-                    <div class="font-bold text-rose-300 flex items-center gap-1.5">
-                        <i class="ph-fill ph-film-slate text-base"></i>
-                        整合頂部數據儀表板 + 賽道落球動畫 + 撞擊音效
+            <!-- 精簡內容主體 -->
+            <div class="p-3 sm:p-4 overflow-y-auto space-y-3 text-xs">
+                
+                <!-- 上半部：黃金交叉瞬間動態預覽 (精簡為 3 點超短提示 + 動畫) -->
+                <div class="p-3 rounded-xl bg-slate-900/95 border border-indigo-500/30 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                    <div class="md:col-span-5 space-y-2">
+                        <div class="inline-block px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[11px]">
+                            🔎 觀賽重點：黃金交叉後追得回來嗎？
+                        </div>
+                        <ul class="space-y-1.5 text-slate-200 text-xs leading-snug">
+                            <li class="flex items-start gap-1.5">
+                                <span class="text-purple-400 font-bold">1. 前期：</span>
+                                <span>紫隊單發數字大，一路領先破關。</span>
+                            </li>
+                            <li class="flex items-start gap-1.5">
+                                <span class="text-lime-400 font-bold">2. 交叉：</span>
+                                <span>後期綠隊球數暴增，單波總傷害反超！</span>
+                            </li>
+                            <li class="flex items-start gap-1.5">
+                                <span class="text-amber-300 font-bold">3. 懸念：</span>
+                                <span>綠隊剩下的關卡夠不够把前面落後的追回來？</span>
+                            </li>
+                        </ul>
+                        <p class="text-[11px] text-slate-400">
+                            （右側以 <code class="text-lime-300">2ⁿ⁻¹</code> 對決 <code class="text-purple-300">10n</code> 示範追趕瞬間）
+                        </p>
                     </div>
-                    <p class="text-xs text-slate-400">
-                        系統會使用內建的 <code class="text-slate-200">720×1280 (直式 9:16)</code> 離屏合成畫布進行高幀率錄製。匯出的影片會<strong>同時包含上方的數學公式、BALLS / POWER、關卡進度、總波數、計時器與下方落球動畫</strong>，即使在手機小螢幕下錄製也不會被裁切！
-                    </p>
+
+                    <div class="md:col-span-7 bg-[#06080f] rounded-xl border border-slate-800 p-1.5">
+                        <div class="w-full h-32 sm:h-36 relative">
+                            <canvas id="previewCrossoverCanvas" class="w-full h-full block"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 錄製選項 -->
-                <div class="space-y-3">
+                <!-- 下半部：二選一模式卡片 (一句話看懂差異，直接點擊開始) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- 模式一 -->
+                    <div class="p-3 rounded-xl bg-slate-900/90 border border-lime-500/40 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-lime-400 text-xs sm:text-sm">🎬 模式一：原影片物理時序</span>
+                            <span class="px-1.5 py-0.5 rounded bg-lime-500/15 text-lime-300 text-[10px] font-mono-num">依距離獨立發射</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-300">
+                            左方球多時<strong>緊貼目標條上方高頻連擊</strong>；右方單球從高處落下行程較長。
+                        </p>
+                        <div class="bg-[#06080f] rounded-lg border border-slate-800 p-1.5 h-20 sm:h-24">
+                            <canvas id="previewVideoMechCanvas" class="w-full h-full block"></canvas>
+                        </div>
+                        <button id="btnSelectVideoMode" class="w-full py-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow flex items-center justify-center gap-1">
+                            <i class="ph-fill ph-play-circle text-base"></i>
+                            選「模式一」開始預測挑戰
+                        </button>
+                    </div>
+
+                    <!-- 模式二 -->
+                    <div class="p-3 rounded-xl bg-slate-900/90 border border-purple-500/40 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-400 text-xs sm:text-sm">📐 模式二：純數學 1:1 回合制</span>
+                            <span class="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 text-[10px] font-mono-num">嚴格同步發射</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-300">
+                            左方發射第 <code class="text-indigo-300">k</code> 波時，右方也<strong>同時發射第 <code class="text-indigo-300">k</code> 波</strong>，純比誰的累計總波數少！
+                        </p>
+                        <div class="bg-[#06080f] rounded-lg border border-slate-800 p-1.5 h-20 sm:h-24">
+                            <canvas id="previewMathMechCanvas" class="w-full h-full block"></canvas>
+                        </div>
+                        <button id="btnSelectMathMode" class="w-full py-2 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow flex items-center justify-center gap-1">
+                            <i class="ph-fill ph-play-circle text-base"></i>
+                            選「模式二」開始預測挑戰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. 彈出式面板：「錄製設定」與「手機匯出影片預覽與分享」 -->
+    <div id="exportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-[#121521] border border-rose-500/40 rounded-2xl max-w-md w-full flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-video-camera text-rose-400 text-lg"></i>
+                    <h3 class="font-bold text-white text-sm sm:text-base">錄製並匯出競賽影片 (9:16 直式)</h3>
+                </div>
+                <button id="btnCloseExportModal" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="ph ph-x text-base"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-3 text-xs sm:text-sm text-slate-300">
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    自動將<strong>「頂部公式儀表板 + 關卡落球動畫」</strong>合成為 <code class="text-slate-200">540×960</code> 高相容直式影片。錄製完成後會彈出預覽視窗，支援手機直接儲存或分享！
+                </p>
+
+                <div class="space-y-2.5">
                     <div>
                         <label class="text-xs text-slate-400 block mb-1">1. 選擇要錄製的競賽模式：</label>
-                        <select id="exportModeSelect" class="w-full bg-slate-800 text-amber-300 font-semibold text-xs sm:text-sm rounded-lg px-3 py-2 border border-slate-700 outline-none">
-                            <option value="video">🎬 模式一：原影片物理時序 (依球體距離獨立發射)</option>
-                            <option value="math">📐 模式二：純數學同步回合制 (嚴格 1:1 同時發射)</option>
+                        <select id="exportModeSelect" class="w-full bg-slate-800 text-amber-300 font-semibold text-xs rounded-lg px-3 py-2 border border-slate-700 outline-none">
+                            <option value="video">🎬 模式一：原影片物理時序</option>
+                            <option value="math">📐 模式二：純數學 1:1 同步回合制</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="text-xs text-slate-400 block mb-1">2. 選擇錄製時的播放倍速：</label>
-                        <select id="exportSpeedSelect" class="w-full bg-slate-800 text-white text-xs sm:text-sm rounded-lg px-3 py-2 border border-slate-700 outline-none">
-                            <option value="1">1.0x 原速錄製 (約 60 秒，完整還原原影片節奏與音效)</option>
-                            <option value="2" selected>2.0x 二倍速錄製 (約 30 秒，適合課堂快速對照比較)</option>
-                            <option value="4">4.0x 四倍速錄製 (約 15 秒，快速看全程消長)</option>
-                            <option value="8">8.0x 極速錄製 (約 8 秒，濃縮精華短片)</option>
+                        <label class="text-xs text-slate-400 block mb-1">2. 選擇錄製倍速（推薦 2x 或 4x 更快速）：</label>
+                        <select id="exportSpeedSelect" class="w-full bg-slate-800 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 outline-none">
+                            <option value="1">1.0x 原速錄製 (約 60 秒)</option>
+                            <option value="2" selected>2.0x 二倍速錄製 (約 30 秒，推薦對照用)</option>
+                            <option value="4">4.0x 四倍速錄製 (約 15 秒，手機快速匯出)</option>
+                            <option value="8">8.0x 八倍速錄製 (約 8 秒，濃縮精華)</option>
                         </select>
                     </div>
 
                     <label class="flex items-center gap-2 cursor-pointer pt-1">
                         <input id="chkExportNoPause" type="checkbox" checked class="rounded text-rose-500 bg-slate-800 border-slate-600">
-                        <span class="text-xs text-slate-300">錄影期間自動略過「黃金交叉暫停」，一鏡到底錄至分出勝負</span>
+                        <span class="text-xs text-slate-300">一鏡到底錄至分出勝負（略過中途黃金交叉暫停）</span>
                     </label>
                 </div>
             </div>
 
-            <div class="px-5 py-3.5 border-t border-slate-800 bg-slate-900/60 flex flex-wrap items-center justify-end gap-2">
-                <button id="btnStartAutoRecord" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
+            <div class="px-4 py-3 border-t border-slate-800 bg-slate-900/60 flex justify-end">
+                <button id="btnStartAutoRecord" class="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
                     <i class="ph-fill ph-record text-base"></i>
-                    從頭開始自動錄製整場比賽 (分出勝負自動下載)
+                    立即開始錄製整場比賽
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 7. 彈出式面板：「賽前導覽與預測提示」 (零劇透！採用示範數列局部追趕片段 + 雙模式節奏微縮圖) -->
-    <div id="introModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-5">
-        <div class="bg-[#111420] border border-amber-500/40 rounded-2xl max-w-5xl w-full max-h-[94dvh] flex flex-col shadow-2xl overflow-hidden">
-            <!-- 標題列 -->
-            <div class="px-4 sm:px-5 py-2.5 sm:py-3 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
+    <!-- 8. 新增彈出式面板：「影片錄製完成 — 手機預覽、原生分享與下載視窗」 (徹底解決手機瀏覽器阻擋非同步自動下載的問題) -->
+    <div id="videoResultModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-[#121521] border border-emerald-500/40 rounded-2xl max-w-md w-full max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-[#0c0e17]">
                 <div class="flex items-center gap-2">
-                    <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
-                        <i class="ph-fill ph-sparkle text-lg sm:text-xl"></i>
-                    </span>
-                    <div>
-                        <h2 class="font-extrabold text-white text-sm sm:text-lg leading-tight">
-                            賽前觀察指南：當「前期落後但加速極快」遇上「前期領先但穩定成長」，誰會先破關？
-                        </h2>
-                        <p class="text-[11px] sm:text-xs text-slate-400 hidden sm:block">
-                            請先觀察下方「黃金交叉局部示範片段」與「兩種競賽發射機制」的差異，做出你的預測後再進入比賽！
-                        </p>
-                    </div>
+                    <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
+                    <h3 class="font-bold text-white text-sm sm:text-base">影片錄製完成！</h3>
                 </div>
-                <button id="btnCloseIntroTop" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition shrink-0" title="關閉導覽">
-                    <i class="ph ph-x text-lg"></i>
+                <button id="btnCloseResultModal" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="ph ph-x text-base"></i>
                 </button>
             </div>
 
-            <!-- 內容主體 -->
-            <div class="p-3 sm:p-5 overflow-y-auto space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-300">
-                
-                <!-- 第一部分：示範數列在「黃金交叉瞬間與之後」的局部動畫 (使用 2^(n-1) vs 10n 示範，不劇透主比賽結果) -->
-                <div class="p-3 sm:p-4 rounded-xl bg-slate-900/95 border border-indigo-500/30 space-y-2.5">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="px-2 py-0.5 rounded bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-bold text-[11px]">
-                                🔎 觀察示範片段（非正式比賽題目）
-                            </span>
-                            <span class="font-bold text-white text-xs sm:text-sm">
-                                指數成長 <code class="text-lime-400">2^(n-1)</code> vs 線性等差 <code class="text-purple-400">10n</code> 在「黃金交叉瞬間 (n = 6 → 8)」
-                            </span>
-                        </div>
-                        <span class="text-[10px] sm:text-[11px] font-mono-num text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                            ⚡ 僅擷取中間追越片段，終點前自動重播
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-center">
-                        <!-- 左側：文字引導 -->
-                        <div class="lg:col-span-5 space-y-1.5 text-xs leading-relaxed text-slate-300">
-                            <p>
-                                在許多函數競賽中，雙方會經歷<strong>「前期差距拉開」</strong>與<strong>「後期黃金交叉反超」</strong>兩個階段：
-                            </p>
-                            <ul class="space-y-1 list-disc list-inside">
-                                <li>
-                                    <strong>前期 (n = 1 ~ 6)</strong>：紫隊 <code class="text-purple-300">10n</code> 一路領先；綠隊 <code class="text-lime-300">2^(n-1)</code> 還在苦苦追趕。
-                                </li>
-                                <li>
-                                    <strong>黃金交叉後 (n = 7 → 8)</strong>：綠隊單波產出在 <code class="text-lime-300">n=8 (128 vs 80)</code> 大幅超越紫隊，消滅血條的速度翻倍暴增！
-                                </li>
-                                <li class="text-amber-300 font-medium">
-                                    🤔 <strong>關鍵思考：</strong>單波傷害「反超」之後，就一定來得及在終點前逆轉嗎？這取決於<strong>「剩下的關卡血量夠不夠厚」</strong>以及<strong>「雙方的發射頻率規則」</strong>！
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- 右側：黃金交叉瞬間局部動畫 Canvas -->
-                        <div class="lg:col-span-7 bg-[#06080f] rounded-xl border border-slate-800 p-2">
-                            <div class="w-full h-36 sm:h-44 relative">
-                                <canvas id="previewCrossoverCanvas" class="w-full h-full block"></canvas>
-                            </div>
-                        </div>
-                    </div>
+            <div class="p-4 overflow-y-auto space-y-3 text-center">
+                <div class="bg-black rounded-xl border border-slate-800 overflow-hidden mx-auto max-w-[220px] shadow-inner">
+                    <video id="recordedVideoPreview" controls playsinline class="w-full h-auto max-h-[42dvh] block mx-auto"></video>
                 </div>
+                <p id="recordedVideoInfo" class="text-[11px] font-mono-num text-slate-400">
+                    格式：MP4/WebM ｜ 解析度：540×960
+                </p>
 
-                <!-- 第二部分：兩種競賽模式的發射頻率規則差異 (只展示物理發射機制差異，絕不劇透最終贏家) -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                    <!-- 卡片 A：原影片物理時序 -->
-                    <div class="p-3 sm:p-4 rounded-xl bg-slate-900/90 border border-lime-500/35 flex flex-col justify-between space-y-2.5">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-0.5 rounded-full bg-lime-500/20 border border-lime-400/40 text-lime-300 text-xs font-bold">
-                                    🎬 模式一：原影片物理時序
-                                </span>
-                                <span class="text-[11px] font-mono-num text-slate-400">依球體距離獨立發射</span>
-                            </div>
-                            <p class="text-xs text-slate-300 leading-relaxed">
-                                還原原影片動畫設定：當球數變多（<code class="text-lime-300">More balls</code>）時，球體會排成<strong>緊貼在目標條正上方的雙層密集綠帶</strong>，落下距離極短、連續撞擊無空檔；而單顆高威力球（<code class="text-purple-300">More power</code>）則是從較高處單顆落下。
-                            </p>
-                        </div>
+                <div class="flex flex-col gap-2 pt-1">
+                    <!-- 手機原生分享 / 儲存到檔案或相簿 (支援 iOS Safari / Android Chrome Web Share API) -->
+                    <button id="btnShareVideoMobile" class=" hidden w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition shadow-lg items-center justify-center gap-1.5">
+                        <i class="ph-fill ph-share-network text-base"></i>
+                        <span>📱 手機分享 / 儲存到檔案或相簿</span>
+                    </button>
 
-                        <!-- 機制微縮動畫 A -->
-                        <div class="bg-[#06080f] rounded-xl border border-slate-800 p-2">
-                            <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-mono-num text-slate-400 px-1 mb-1">
-                                <span>機制特寫：左方貼近連續撞擊 vs 右方高處落下</span>
-                                <span class="text-lime-300">非 1:1 同步波次</span>
-                            </div>
-                            <div class="w-full h-24 sm:h-28 relative">
-                                <canvas id="previewVideoMechCanvas" class="w-full h-full block"></canvas>
-                            </div>
-                        </div>
-
-                        <button id="btnSelectVideoMode" class="w-full py-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
-                            <i class="ph-fill ph-play-circle text-base"></i>
-                            選擇「模式一：原影片物理時序」進入挑戰
-                        </button>
-                    </div>
-
-                    <!-- 卡片 B：純數學同步回合制 -->
-                    <div class="p-3 sm:p-4 rounded-xl bg-slate-900/90 border border-purple-500/35 flex flex-col justify-between space-y-2.5">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-bold">
-                                    📐 模式二：純數學同步回合制
-                                </span>
-                                <span class="text-[11px] font-mono-num text-slate-400">嚴格 1:1 同時發射</span>
-                            </div>
-                            <p class="text-xs text-slate-300 leading-relaxed">
-                                排除動畫距離影響，採用<strong>嚴格的離散數學回合制</strong>：中央節拍器每響一次，左邊發射第 <code class="text-indigo-300">k</code> 波的同時，右邊也必定同步發射第 <code class="text-indigo-300">k</code> 波。純粹比誰走完所有關卡所需的<strong>「累計總波數 $\sum \lceil \text{目標} / V(n) \rceil$」</strong>較少！
-                            </p>
-                        </div>
-
-                        <!-- 機制微縮動畫 B -->
-                        <div class="bg-[#06080f] rounded-xl border border-slate-800 p-2">
-                            <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-mono-num text-slate-400 px-1 mb-1">
-                                <span>機制特寫：雙方隨節拍器嚴格 1:1 同時發射每一波</span>
-                                <span class="text-purple-300">純比累計總波數</span>
-                            </div>
-                            <div class="w-full h-24 sm:h-28 relative">
-                                <canvas id="previewMathMechCanvas" class="w-full h-full block"></canvas>
-                            </div>
-                        </div>
-
-                        <button id="btnSelectMathMode" class="w-full py-2 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 font-extrabold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
-                            <i class="ph-fill ph-play-circle text-base"></i>
-                            選擇「模式二：純數學同步回合制」進入挑戰
-                        </button>
-                    </div>
+                    <!-- 直接點擊下載連結 (因為是由使用者親手點擊此按鈕，手機瀏覽器 100% 允許下載) -->
+                    <a id="btnDirectDownloadVideo" href="#" download="函數競賽.mp4" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-1.5">
+                        <i class="ph-bold ph-download-simple text-base"></i>
+                        <span>💾 下載影片檔案至裝置</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 8. 彈出式面板：「函數與關卡設定」 -->
+    <!-- 9. 彈出式面板：「函數與關卡設定」 -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-3 sm:p-6">
         <div class="bg-[#121521] border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden">
             <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
@@ -559,7 +548,6 @@
                             </select>
                         </div>
 
-                        <!-- 等差數列參數 -->
                         <div id="leftArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
@@ -571,7 +559,6 @@
                             </div>
                         </div>
 
-                        <!-- 等比數列參數 -->
                         <div id="leftGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
@@ -583,7 +570,6 @@
                             </div>
                         </div>
 
-                        <!-- 自訂顯式輸入 -->
                         <div id="leftCustomExpBox" class="hidden pt-2 border-t border-slate-800 space-y-1.5">
                             <label class="text-xs text-slate-400 block">
                                 輸入含 <code class="text-lime-300">n</code> 的算式（如 <code class="text-lime-300">3n^2 - 2n</code>、<code class="text-lime-300">n(n+1)/2</code>）：
@@ -594,7 +580,6 @@
                             </div>
                         </div>
 
-                        <!-- 自訂遞迴輸入 -->
                         <div id="leftCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-2 border-t border-slate-800 text-xs">
                             <div>
                                 <label class="text-slate-400 block mb-1">首項 a₁</label>
@@ -646,7 +631,6 @@
                             </select>
                         </div>
 
-                        <!-- 等差數列參數 -->
                         <div id="rightArithmeticBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
@@ -658,7 +642,6 @@
                             </div>
                         </div>
 
-                        <!-- 等比數列參數 -->
                         <div id="rightGeometricBox" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">首項 a₁</label>
@@ -670,7 +653,6 @@
                             </div>
                         </div>
 
-                        <!-- 自訂顯式輸入 -->
                         <div id="rightCustomExpBox" class="hidden pt-2 border-t border-slate-800 space-y-1.5">
                             <label class="text-xs text-slate-400 block">
                                 輸入含 <code class="text-purple-300">n</code> 的算式（如 <code class="text-purple-300">15n + 10</code>、<code class="text-purple-300">2n^2 + 5</code>）：
@@ -681,7 +663,6 @@
                             </div>
                         </div>
 
-                        <!-- 自訂遞迴輸入 -->
                         <div id="rightCustomRecBox" class="hidden grid grid-cols-4 gap-2 pt-2 border-t border-slate-800 text-xs">
                             <div>
                                 <label class="text-slate-400 block mb-1">首項 a₁</label>
@@ -737,7 +718,7 @@
         </div>
     </div>
 
-    <!-- 9. 彈出式面板：「數據對照表」 -->
+    <!-- 10. 彈出式面板：「數據對照表」 -->
     <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-3 sm:p-6">
         <div class="bg-[#121521] border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden">
             <div class="px-5 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
@@ -775,12 +756,12 @@
 
     <script>
         /**************************************************************************
-         * 1. Web Audio API 音效引擎 (支援同步將音訊串流匯出至 MediaRecorder 影片中)
+         * 1. Web Audio API 音效引擎
          **************************************************************************/
         class SoundEngine {
             constructor() {
                 this.ctx = null;
-                this.destNode = null; // 供影片錄製匯出音軌使用
+                this.destNode = null;
                 this.muted = false;
                 this.lastLeftSound = 0;
                 this.lastRightSound = 0;
@@ -792,12 +773,14 @@
                     if (AudioCtx) {
                         this.ctx = new AudioCtx();
                         if (this.ctx.createMediaStreamDestination) {
-                            this.destNode = this.ctx.createMediaStreamDestination();
+                            try {
+                                this.destNode = this.ctx.createMediaStreamDestination();
+                            } catch (e) {}
                         }
                     }
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                    this.ctx.resume().catch(() => {});
                 }
             }
 
@@ -805,7 +788,9 @@
                 if (!this.ctx) return;
                 gainNode.connect(this.ctx.destination);
                 if (this.destNode) {
-                    gainNode.connect(this.destNode);
+                    try {
+                        gainNode.connect(this.destNode);
+                    } catch (e) {}
                 }
             }
 
@@ -883,7 +868,7 @@
         const sound = new SoundEngine();
 
         /**************************************************************************
-         * 2. 完整無限精確的質數數列產生器 (Dynamic Prime Sieve & Cache)
+         * 2. 無限精確質數數列產生器
          **************************************************************************/
         const PRIME_CACHE = [2, 3];
 
@@ -913,7 +898,7 @@
         }
 
         /**************************************************************************
-         * 3. 自訂顯式公式的安全性白名單與隱含乘法容錯解析器
+         * 3. 自訂顯式公式解析器
          **************************************************************************/
         function parseAndNormalizeCustomExpr(rawInput) {
             if (!rawInput || typeof rawInput !== 'string') {
@@ -939,7 +924,7 @@
                 checkStr = checkStr.split(fnName).join('');
             }
             if (/[^0-9n+\-*/^().,]/.test(checkStr)) {
-                return { valid: false, fn: (n) => n, latex: '\\text{語法錯誤}', plainText: 'f(n)', error: '包含不支援的符號或未知變數（僅限使用變數 n）' };
+                return { valid: false, fn: (n) => n, latex: '\\text{語法錯誤}', plainText: 'f(n)', error: '包含不支援的符號或未知變數' };
             }
 
             const funcMap = {
@@ -1015,10 +1000,10 @@
             if (parsed.valid) {
                 const samples = [1, 2, 3, 4].map(k => `n=${k}→${parsed.fn(k).toLocaleString()}`).join(', ');
                 previewEl.className = 'text-[11px] font-mono-num text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded border border-emerald-500/30';
-                previewEl.textContent = `✓ 語法有效｜前 4 項預覽：${samples}`;
+                previewEl.textContent = `✓ 語法有效｜前 4 項：${samples}`;
             } else {
                 previewEl.className = 'text-[11px] font-mono-num text-rose-400 bg-rose-950/40 px-2.5 py-1 rounded border border-rose-500/40';
-                previewEl.textContent = `✗ ${parsed.error}（將暫以 f(n)=n 計算）`;
+                previewEl.textContent = `✗ ${parsed.error}`;
             }
         }
 
@@ -1129,7 +1114,6 @@
             }
         }
 
-        // 提供給錄影匯出畫布繪製漂亮數學公式字串
         function getPlainTextFormula(side) {
             const funcType = document.getElementById(`${side}FuncSelect`).value;
             switch (funcType) {
@@ -1166,7 +1150,7 @@
         }
 
         /**************************************************************************
-         * 5. 動態偵測「落後方的單波產出首次追平或超越領先方」之黃金交叉回合
+         * 5. 動態偵測黃金交叉回合
          **************************************************************************/
         let detectedCrossoverInfo = null;
 
@@ -1225,8 +1209,6 @@
 
         /**************************************************************************
          * 6. 賽道物理與時序控制器 (TrackState)
-         *    特別優化：getStageY 與落球距離 100% 根據當前畫布實際高度動態縮放，
-         *    徹底解決手機小螢幕高度較矮時關卡掉出畫面外的問題！
          **************************************************************************/
         const PRESET_MILESTONES = {
             classic: [5, 10, 15, 20, 30, 40, 60, 80, 100, 150, 200, 300, 1000, 12000],
@@ -1235,20 +1217,14 @@
             short: [5, 15, 30, 60, 120, 250, 500, 2000]
         };
 
-        // 動態計算關卡 Y 座標，完全自適應任何螢幕高度 (包含極小手機高度與 9:16 匯出畫布)
         function getStageLayoutMetrics(totalStages, canvasHeight) {
-            const topSpace = Math.max(18, Math.min(40, canvasHeight * 0.065));
-            const finishMarginBottom = Math.max(20, Math.min(36, canvasHeight * 0.055));
+            const topSpace = Math.max(18, Math.min(38, canvasHeight * 0.06));
+            const finishMarginBottom = Math.max(20, Math.min(34, canvasHeight * 0.055));
             const finishY = Math.max(topSpace + 60, canvasHeight - finishMarginBottom);
-            const bottomClearance = Math.max(12, Math.min(24, canvasHeight * 0.035));
+            const bottomClearance = Math.max(12, Math.min(22, canvasHeight * 0.035));
             const availableHeight = Math.max(45, finishY - topSpace - bottomClearance);
             const gap = availableHeight / Math.max(1, totalStages);
             return { topSpace, finishY, availableHeight, gap };
-        }
-
-        function getStageY(stageIdx, totalStages, canvasHeight) {
-            const { topSpace, gap } = getStageLayoutMetrics(totalStages, canvasHeight);
-            return topSpace + stageIdx * gap;
         }
 
         class TrackState {
@@ -1311,8 +1287,6 @@
                 document.getElementById(`${this.side}WaveVal`).textContent = this.totalWaves;
             }
 
-            // 球體座標改為儲存「相對於目標進度條的進度比例 (progress 0~1)」與「相對橫向比例 rx (-0.5~0.5)」，
-            // 這樣無論手機螢幕縮放、旋轉或同時繪製到 720x1280 匯出影片畫布時，座標都能 100% 完美對齊！
             spawnWaveVisuals(waveDuration) {
                 if (this.finished) return;
                 this.totalWaves++;
@@ -1324,8 +1298,8 @@
                 if (this.mode === 'power') {
                     const travelTime = waveDuration * 0.75;
                     this.balls.push({
-                        rx: 0, // 正中央
-                        dropDistFactor: 1.0, // 標準單球落下高度
+                        rx: 0,
+                        dropDistFactor: 1.0,
                         progress: 0,
                         speedProgress: 1 / travelTime,
                         radiusFactor: 1.25,
@@ -1406,7 +1380,7 @@
         }
 
         /**************************************************************************
-         * 7. 主競賽舞台 Fixed-Timestep 物理引擎與雙畫布繪圖 (螢幕 Canvas + 錄影匯出 Canvas)
+         * 7. 主競賽舞台物理引擎與雙畫布渲染
          **************************************************************************/
         const canvas = document.getElementById('raceCanvas');
         const ctx = canvas.getContext('2d');
@@ -1565,17 +1539,16 @@
                 const trailingName = trailingSide === 'left' ? '左賽道' : '右賽道';
                 const leadingName = trailingSide === 'left' ? '右賽道' : '左賽道';
                 const actionDesc = isEqual
-                    ? `單波產出正式追平 ${leadingName}（雙方皆為 ${vL.toLocaleString()}），下一關起即將展開倍數反超！`
-                    : `單波產出正式反超 ${leadingName}（左 ${vL.toLocaleString()} vs 右 ${vR.toLocaleString()}）！`;
+                    ? `單波產出正式追平 ${leadingName}（皆為 ${vL.toLocaleString()}）！`
+                    : `單波產出正式反超 ${leadingName}（${vL.toLocaleString()} vs ${vR.toLocaleString()}）！`;
 
                 const banner = document.getElementById('teachingBanner');
                 document.getElementById('teachingBannerText').textContent =
-                    `⚡ 黃金交叉觀察點 (n = ${crossN})：前期落後的${trailingName}${actionDesc} 目前左方在第 ${leftTrack.n} 關、右方在第 ${rightTrack.n} 關，請預測誰會先抵達 FINISH？`;
+                    `⚡ 黃金交叉 (n = ${crossN})：前期落後的${trailingName}${actionDesc} 目前左在第 ${leftTrack.n} 關、右在第 ${rightTrack.n} 關，誰會先到終點？`;
                 banner.classList.remove('hidden');
             }
         }
 
-        // 通用賽道繪製函數 (可同時繪製在主畫面 Canvas 與 720x1280 影片匯出 Canvas 上)
         function drawTrackOnContext(targetCtx, track, xOffset, trackWidth, areaTopY, areaHeight) {
             const centerX = xOffset + trackWidth / 2;
             const barWidth = trackWidth * 0.84;
@@ -1583,11 +1556,10 @@
             const totalStages = track.stages.length;
 
             const { topSpace, finishY, gap } = getStageLayoutMetrics(totalStages, areaHeight);
-            const barHeight = Math.min(11, Math.max(4.2, gap * 0.36));
-            const baseDropPx = Math.min(34, Math.max(15, gap * 1.15));
-            const baseBallRadius = Math.min(3.8, Math.max(2.2, gap * 0.14));
+            const barHeight = Math.min(10, Math.max(4.0, gap * 0.36));
+            const baseDropPx = Math.min(32, Math.max(14, gap * 1.15));
+            const baseBallRadius = Math.min(3.6, Math.max(2.0, gap * 0.14));
 
-            // 1. 繪製存活的關卡進度條
             for (let i = track.currentStageIndex; i < totalStages; i++) {
                 const st = track.stages[i];
                 if (st.remaining <= 0) continue;
@@ -1608,7 +1580,7 @@
                     targetCtx.fillStyle = track.color;
                     if (isCurrent) {
                         targetCtx.shadowColor = track.color;
-                        targetCtx.shadowBlur = 8;
+                        targetCtx.shadowBlur = 7;
                     } else {
                         targetCtx.globalAlpha = 0.88;
                     }
@@ -1618,10 +1590,10 @@
                     targetCtx.restore();
                 }
 
-                const fontSize = Math.min(11.5, Math.max(7.5, gap * 0.36));
+                const fontSize = Math.min(11, Math.max(7.2, gap * 0.36));
                 const textY = y + barHeight + fontSize + 1;
 
-                targetCtx.font = `600 ${Math.max(7, fontSize - 1.5)}px "JetBrains Mono", monospace`;
+                targetCtx.font = `600 ${Math.max(6.8, fontSize - 1.5)}px "JetBrains Mono", monospace`;
                 targetCtx.fillStyle = isCrossoverStage ? '#fbbf24' : '#64748b';
                 targetCtx.textAlign = 'left';
                 targetCtx.fillText(String(i + 1).padStart(2, '0') + (isCrossoverStage ? '⚡' : ''), barStartX, textY);
@@ -1635,14 +1607,13 @@
                 targetCtx.fillText(isCurrent ? `${remFormatted} / ${maxFormatted}` : maxFormatted, centerX, textY);
             }
 
-            // 2. 繪製球體
             const targetLocalY = topSpace + Math.min(track.currentStageIndex, totalStages - 1) * gap;
             const targetY = areaTopY + targetLocalY;
 
             targetCtx.save();
             targetCtx.fillStyle = track.color;
             targetCtx.shadowColor = track.color;
-            targetCtx.shadowBlur = track.mode === 'power' ? 11 : 4;
+            targetCtx.shadowBlur = track.mode === 'power' ? 10 : 3;
             for (const b of track.balls) {
                 const bx = centerX + b.rx * barWidth;
                 let by;
@@ -1659,7 +1630,6 @@
             }
             targetCtx.restore();
 
-            // 3. 繪製破關微粒
             targetCtx.save();
             targetCtx.fillStyle = track.color;
             for (const p of track.particles) {
@@ -1672,7 +1642,6 @@
             }
             targetCtx.restore();
 
-            // 4. 繪製 FINISH 終點線
             const absFinishY = areaTopY + finishY;
             targetCtx.strokeStyle = '#334155';
             targetCtx.lineWidth = 1;
@@ -1681,31 +1650,30 @@
             targetCtx.lineTo(barStartX + barWidth, absFinishY);
             targetCtx.stroke();
 
-            const finishFontSize = Math.min(11, Math.max(8.5, gap * 0.34));
+            const finishFontSize = Math.min(10.5, Math.max(8, gap * 0.34));
             targetCtx.font = `600 ${finishFontSize}px "Inter", sans-serif`;
             targetCtx.fillStyle = '#94a3b8';
             targetCtx.textAlign = 'center';
             targetCtx.fillText('FINISH', centerX, absFinishY + finishFontSize + 4);
 
-            // 5. 繪製 WINNER 獲勝方框
             if (track.isWinner) {
-                const boxW = Math.min(180, barWidth * 0.76);
-                const boxH = Math.min(38, Math.max(26, areaHeight * 0.065));
+                const boxW = Math.min(165, barWidth * 0.76);
+                const boxH = Math.min(36, Math.max(24, areaHeight * 0.062));
                 const boxX = centerX - boxW / 2;
-                const boxY = absFinishY - boxH - 12;
+                const boxY = absFinishY - boxH - 10;
 
                 targetCtx.save();
                 targetCtx.strokeStyle = track.color;
                 targetCtx.lineWidth = 2;
                 targetCtx.shadowColor = track.color;
-                targetCtx.shadowBlur = 16;
+                targetCtx.shadowBlur = 14;
                 targetCtx.fillStyle = 'rgba(10, 12, 20, 0.94)';
                 targetCtx.beginPath();
                 targetCtx.roundRect(boxX, boxY, boxW, boxH, 7);
                 targetCtx.fill();
                 targetCtx.stroke();
 
-                targetCtx.font = `800 ${Math.min(16, Math.max(12, boxH * 0.44))}px "Inter", sans-serif`;
+                targetCtx.font = `800 ${Math.min(15, Math.max(11, boxH * 0.44))}px "Inter", sans-serif`;
                 targetCtx.fillStyle = track.color;
                 targetCtx.textAlign = 'center';
                 targetCtx.textBaseline = 'middle';
@@ -1721,28 +1689,34 @@
         }
 
         /**************************************************************************
-         * 8. 離屏 9:16 合成影片錄製引擎 (Offscreen Composite Video Exporter)
-         *    同時將「頂部標題 + 雙欄公式與 BALLS/POWER/總波數儀表板 + 賽道落球動畫 + 音效」
-         *    錄製成標準 720x1280 直式影片並自動觸發下載！
+         * 8. 手機高相容 9:16 影片錄製與匯出引擎 (Mobile-First Video Exporter)
+         *    - 採用掛載於 DOM 的 540x960 畫布
+         *    - 在使用者點擊事件同步執行緒中啟動 MediaRecorder (無 setTimeout 阻斷)
+         *    - 音軌混合自動容錯降級機制 (防止 iOS Safari 拒絕混合 WebAudio + Canvas)
+         *    - 錄影完成後彈出預覽視窗 + 原生 Web Share API + 手動下載按鈕
          **************************************************************************/
         const videoExporter = {
             isRecording: false,
             recorder: null,
             chunks: [],
-            offCanvas: document.createElement('canvas'),
+            domCanvas: null,
             offCtx: null,
-            width: 720,
-            height: 1280,
-            stopDelayTimer: 0,
+            width: 540,
+            height: 960,
+            lastBlobUrl: null,
+            lastFile: null,
 
             init() {
-                this.offCanvas.width = this.width;
-                this.offCanvas.height = this.height;
-                this.offCtx = this.offCanvas.getContext('2d');
+                if (!this.domCanvas) {
+                    this.domCanvas = document.getElementById('compositeExportCanvas');
+                    this.domCanvas.width = this.width;
+                    this.domCanvas.height = this.height;
+                    this.offCtx = this.domCanvas.getContext('2d');
+                }
             },
 
             renderCompositeFrame() {
-                if (!this.offCtx) this.init();
+                this.init();
                 const c = this.offCtx;
                 const W = this.width;
                 const H = this.height;
@@ -1752,33 +1726,33 @@
                 c.fillStyle = '#030305';
                 c.fillRect(0, 0, W, H);
 
-                // 2. 頂部標題與當前模式橫幅 (高度 56px)
+                // 2. 頂部標題與當前模式橫幅 (高度 44px)
                 c.fillStyle = '#0b0d14';
-                c.fillRect(0, 0, W, 56);
+                c.fillRect(0, 0, W, 44);
                 c.strokeStyle = '#1e293b';
                 c.lineWidth = 1;
                 c.beginPath();
-                c.moveTo(0, 56);
-                c.lineTo(W, 56);
+                c.moveTo(0, 44);
+                c.lineTo(W, 44);
                 c.stroke();
 
-                c.font = '700 18px "Inter", sans-serif';
+                c.font = '700 14px "Inter", sans-serif';
                 c.fillStyle = '#ffffff';
                 c.textAlign = 'left';
-                c.fillText('Which one wins? 函數競賽實驗室', 20, 34);
+                c.fillText('Which one wins? 函數競賽', 14, 27);
 
                 const modeVal = document.getElementById('simEngineSelect').value;
                 const modeBadgeText = modeVal === 'video'
-                    ? '🎬 模式一：原影片物理時序'
-                    : '📐 模式二：純數學 1:1 同步回合制';
-                c.font = '600 14px "Inter", sans-serif';
+                    ? '🎬 模式一：原影片時序'
+                    : '📐 模式二：純數學1:1回合制';
+                c.font = '600 12px "Inter", sans-serif';
                 c.fillStyle = '#fbbf24';
                 c.textAlign = 'right';
-                c.fillText(`${modeBadgeText} ｜ ⏱ ${formatSimTime(simElapsedTime)} (${simSpeed.toFixed(1)}x)`, W - 20, 34);
+                c.fillText(`${modeBadgeText} ｜ ⏱ ${formatSimTime(simElapsedTime)}`, W - 14, 27);
 
-                // 3. 雙欄數學公式與即時數據儀表板 (Y: 56 ~ 260, 高度 204px)
-                const dashTop = 56;
-                const dashH = 204;
+                // 3. 雙欄數學公式與即時數據儀表板 (Y: 44 ~ 196, 高度 152px)
+                const dashTop = 44;
+                const dashH = 152;
                 c.fillStyle = '#06070b';
                 c.fillRect(0, dashTop, W, dashH);
 
@@ -1792,81 +1766,57 @@
 
                 const drawSideHeader = (track, xCenter, formulaStr) => {
                     const modeTitle = track.mode === 'balls' ? 'More balls' : 'More power';
-                    c.font = '500 15px "Inter", sans-serif';
+                    c.font = '500 12px "Inter", sans-serif';
                     c.fillStyle = '#cbd5e1';
                     c.textAlign = 'center';
-                    c.fillText(modeTitle, xCenter, dashTop + 26);
+                    c.fillText(modeTitle, xCenter, dashTop + 20);
 
-                    // 公式大字
                     c.save();
-                    c.font = '800 38px "Times New Roman", "Inter", serif';
+                    c.font = '800 28px "Times New Roman", "Inter", serif';
                     c.fillStyle = track.color;
                     c.shadowColor = track.color;
-                    c.shadowBlur = 16;
-                    c.fillText(formulaStr, xCenter, dashTop + 74);
+                    c.shadowBlur = 12;
+                    c.fillText(formulaStr, xCenter, dashTop + 54);
                     c.restore();
 
-                    // BALLS & POWER 標籤與數值
                     const ballsCount = track.mode === 'balls' ? track.currentVal : 1;
                     const powerCount = track.mode === 'balls' ? 1 : track.currentVal;
 
-                    c.font = '600 12px "Inter", sans-serif';
+                    c.font = '600 10px "Inter", sans-serif';
                     c.fillStyle = '#94a3b8';
-                    c.fillText('BALLS', xCenter - 70, dashTop + 105);
-                    c.fillText('POWER', xCenter + 70, dashTop + 105);
+                    c.fillText('BALLS', xCenter - 52, dashTop + 78);
+                    c.fillText('POWER', xCenter + 52, dashTop + 78);
 
-                    c.font = '700 28px "JetBrains Mono", monospace';
+                    c.font = '700 21px "JetBrains Mono", monospace';
                     c.fillStyle = track.color;
-                    c.fillText(ballsCount.toLocaleString(), xCenter - 70, dashTop + 138);
-                    c.fillText(powerCount.toLocaleString(), xCenter + 70, dashTop + 138);
+                    c.fillText(ballsCount.toLocaleString(), xCenter - 52, dashTop + 104);
+                    c.fillText(powerCount.toLocaleString(), xCenter + 52, dashTop + 104);
 
-                    // n / STAGE / 總波數
                     const stageNum = String(Math.min(track.currentStageIndex + 1, track.stages.length)).padStart(2, '0');
                     const totalStageNum = String(track.stages.length).padStart(2, '0');
-                    c.font = '600 15px "JetBrains Mono", monospace';
+                    c.font = '600 11.5px "JetBrains Mono", monospace';
                     c.fillStyle = '#e2e8f0';
                     c.fillText(
-                        `n = ${track.n} / ${stageNum} OF ${totalStageNum}  |  總波數: ${track.totalWaves}`,
+                        `n=${track.n} / ${stageNum} OF ${totalStageNum} | 波數:${track.totalWaves}`,
                         xCenter,
-                        dashTop + 178
+                        dashTop + 134
                     );
                 };
 
                 drawSideHeader(leftTrack, halfW / 2, getPlainTextFormula('left'));
                 drawSideHeader(rightTrack, halfW + halfW / 2, getPlainTextFormula('right'));
 
-                // 4. 下方賽道區域 (Y: 260 ~ 1280, 高度 1020px)
+                // 4. 下方賽道區域 (Y: 196 ~ 960, 高度 764px)
                 const raceTop = dashTop + dashH;
                 const raceH = H - raceTop;
                 drawTrackOnContext(c, leftTrack, 0, halfW, raceTop, raceH);
                 drawTrackOnContext(c, rightTrack, halfW, halfW, raceTop, raceH);
             },
 
-            startRecording() {
-                if (this.isRecording) return;
-                sound.init();
-                this.init();
-                this.renderCompositeFrame();
-
-                let stream;
-                try {
-                    stream = this.offCanvas.captureStream(60);
-                } catch (err) {
-                    alert('您的瀏覽器不支援 Canvas 影片錄製功能，建議使用 Chrome / Edge / Safari 最新版本。');
-                    return;
-                }
-
-                // 若有音訊串流且未靜音，將音效軌合併進影片中
-                if (sound.destNode && !sound.muted) {
-                    const audioTracks = sound.destNode.stream.getAudioTracks();
-                    if (audioTracks.length > 0) {
-                        stream.addTrack(audioTracks[0]);
-                    }
-                }
-
+            createRecorderWithFallback(videoStream) {
                 const mimeCandidates = [
-                    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
                     'video/mp4',
+                    'video/mp4;codecs=avc1',
                     'video/webm;codecs=vp9,opus',
                     'video/webm;codecs=vp8,opus',
                     'video/webm'
@@ -1881,44 +1831,92 @@
                     }
                 }
 
+                // 優先嘗試合併音效軌；若手機瀏覽器不支援混合 Canvas + WebAudio，自動降級為純視訊流
+                if (sound.destNode && !sound.muted) {
+                    try {
+                        const combinedTracks = [
+                            ...videoStream.getVideoTracks(),
+                            ...sound.destNode.stream.getAudioTracks()
+                        ];
+                        const combinedStream = new MediaStream(combinedTracks);
+                        const rec = selectedMime
+                            ? new MediaRecorder(combinedStream, { mimeType: selectedMime, videoBitsPerSecond: 2500000 })
+                            : new MediaRecorder(combinedStream);
+                        return rec;
+                    } catch (err) {
+                        // 音軌合併失敗，退回純視訊錄製
+                    }
+                }
+
+                try {
+                    return selectedMime
+                        ? new MediaRecorder(videoStream, { mimeType: selectedMime, videoBitsPerSecond: 2500000 })
+                        : new MediaRecorder(videoStream);
+                } catch (e) {
+                    return new MediaRecorder(videoStream);
+                }
+            },
+
+            startRecordingSync() {
+                if (this.isRecording) return false;
+                sound.init();
+                this.init();
+                this.renderCompositeFrame();
+
+                const captureFn = this.domCanvas.captureStream || this.domCanvas.webkitCaptureStream;
+                if (!captureFn || !window.MediaRecorder) {
+                    alert('您的手機瀏覽器版本不支援畫面錄製 API，建議使用 Safari (iOS 15+) 或 Chrome 瀏覽器。');
+                    return false;
+                }
+
+                let videoStream;
+                try {
+                    videoStream = captureFn.call(this.domCanvas, 30);
+                } catch (err) {
+                    alert('無法啟動畫布串流：' + err.message);
+                    return false;
+                }
+
                 this.chunks = [];
                 try {
-                    this.recorder = selectedMime
-                        ? new MediaRecorder(stream, { mimeType: selectedMime, videoBitsPerSecond: 6000000 })
-                        : new MediaRecorder(stream);
-                } catch (e) {
-                    this.recorder = new MediaRecorder(stream);
+                    this.recorder = this.createRecorderWithFallback(videoStream);
+                } catch (err) {
+                    alert('無法啟動錄影器：' + err.message);
+                    return false;
                 }
 
                 this.recorder.ondataavailable = (ev) => {
-                    if (ev.data && ev.data.size > 0) this.chunks.push(ev.data);
+                    if (ev.data && ev.data.size > 0) {
+                        this.chunks.push(ev.data);
+                    }
                 };
 
                 this.recorder.onstop = () => {
-                    const finalMime = this.recorder.mimeType || 'video/webm';
-                    const ext = finalMime.includes('mp4') ? 'mp4' : 'webm';
-                    const blob = new Blob(this.chunks, { type: finalMime });
-                    const url = URL.createObjectURL(blob);
-
-                    const modeTag = document.getElementById('simEngineSelect').value === 'video' ? '原影片時序' : '純數學同步制';
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `函數競賽_${modeTag}_${simSpeed.toFixed(1)}x.${ext}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                    }, 1500);
+                    this.presentRecordedVideoResult();
                 };
 
-                this.recorder.start(200);
-                this.isRecording = true;
-                this.stopDelayTimer = 0;
+                try {
+                    // 若開始時結合音軌在 start() 階段拋錯，立即切換純視訊重試
+                    this.recorder.start(250);
+                } catch (startErr) {
+                    try {
+                        this.recorder = new MediaRecorder(videoStream);
+                        this.recorder.ondataavailable = (ev) => {
+                            if (ev.data && ev.data.size > 0) this.chunks.push(ev.data);
+                        };
+                        this.recorder.onstop = () => this.presentRecordedVideoResult();
+                        this.recorder.start(250);
+                    } catch (retryErr) {
+                        alert('手機錄影啟動失敗，請改用系統內建螢幕錄影功能。');
+                        return false;
+                    }
+                }
 
+                this.isRecording = true;
                 document.getElementById('recordingBanner').classList.remove('hidden');
-                document.getElementById('textExportVideo').textContent = '停止並儲存';
+                document.getElementById('textExportVideo').textContent = '完成並儲存';
                 document.getElementById('exportStatusDot').classList.add('rec-dot');
+                return true;
             },
 
             stopRecording() {
@@ -1926,23 +1924,77 @@
                 this.isRecording = false;
                 bypassGoldenCrossForRecording = false;
 
-                if (this.recorder && this.recorder.state !== 'inactive') {
-                    this.recorder.stop();
-                }
+                try {
+                    if (this.recorder && this.recorder.state !== 'inactive') {
+                        this.recorder.stop();
+                    }
+                } catch (e) {}
 
                 document.getElementById('recordingBanner').classList.add('hidden');
                 document.getElementById('textExportVideo').textContent = '匯出影片';
                 document.getElementById('exportStatusDot').classList.remove('rec-dot');
                 setTimeout(resizeCanvas, 30);
+            },
+
+            presentRecordedVideoResult() {
+                if (this.chunks.length === 0) return;
+
+                const finalMime = (this.recorder && this.recorder.mimeType) ? this.recorder.mimeType : 'video/mp4';
+                const isMp4 = finalMime.toLowerCase().includes('mp4');
+                const ext = isMp4 ? 'mp4' : 'webm';
+                const cleanMime = isMp4 ? 'video/mp4' : 'video/webm';
+
+                const blob = new Blob(this.chunks, { type: cleanMime });
+                if (this.lastBlobUrl) URL.revokeObjectURL(this.lastBlobUrl);
+                this.lastBlobUrl = URL.createObjectURL(blob);
+
+                const modeTag = document.getElementById('simEngineSelect').value === 'video' ? '原影片時序' : '純數學同步制';
+                const fileName = `函數競賽_${modeTag}_${simSpeed.toFixed(1)}x.${ext}`;
+
+                // 設定預覽播放器與直接下載按鈕
+                const videoEl = document.getElementById('recordedVideoPreview');
+                videoEl.src = this.lastBlobUrl;
+                videoEl.load();
+                videoEl.play().catch(() => {});
+
+                const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                document.getElementById('recordedVideoInfo').textContent =
+                    `檔案：${fileName} (${sizeMB} MB)`;
+
+                const dlBtn = document.getElementById('btnDirectDownloadVideo');
+                dlBtn.href = this.lastBlobUrl;
+                dlBtn.download = fileName;
+
+                // 檢查手機是否支援 Web Share API 分享檔案 (iOS Safari / Android Chrome 最順暢的存檔方式)
+                const shareBtn = document.getElementById('btnShareVideoMobile');
+                this.lastFile = null;
+                try {
+                    const fileObj = new File([blob], fileName, { type: cleanMime });
+                    if (navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+                        this.lastFile = fileObj;
+                        shareBtn.classList.remove('hidden');
+                        shareBtn.classList.add('flex');
+                    } else {
+                        shareBtn.classList.add('hidden');
+                        shareBtn.classList.remove('flex');
+                    }
+                } catch (e) {
+                    shareBtn.classList.add('hidden');
+                    shareBtn.classList.remove('flex');
+                }
+
+                const resultModal = document.getElementById('videoResultModal');
+                resultModal.classList.remove('hidden');
+                resultModal.classList.add('flex');
             }
         };
 
         /**************************************************************************
-         * 9. 賽前導覽「非劇透局部追趕示範」與「雙模式發射機制」動態模擬器
+         * 9. 賽前極簡導覽動態模擬器
          **************************************************************************/
         const crossoverDemo = {
             t: 0,
-            duration: 9.5,
+            duration: 9.0,
             leftStage: 0,
             rightStage: 1,
             leftRem: 120,
@@ -2014,20 +2066,20 @@
             const leftVals = [32, 64, 128];
             const rightVals = [60, 70, 80];
 
-            const getBarY = (idx) => 42 + idx * Math.max(24, (h - 70) / 3);
+            const getBarY = (idx) => 34 + idx * Math.max(22, (h - 56) / 3);
 
             crossoverDemo.leftWaveClock += dt;
             if (crossoverDemo.leftWaveClock >= 0.65 && crossoverDemo.leftStage < 3) {
                 crossoverDemo.leftWaveClock = 0;
                 const targetY = getBarY(crossoverDemo.leftStage);
                 const vL = leftVals[crossoverDemo.leftStage];
-                const count = Math.min(28, Math.floor(vL / 2));
+                const count = Math.min(26, Math.floor(vL / 2));
                 const dmg = vL / count;
                 for (let i = 0; i < count; i++) {
                     crossoverDemo.leftBalls.push({
                         x: halfW * 0.14 + Math.random() * (halfW * 0.72),
-                        y: targetY - 12 - (i % 2) * 7,
-                        vy: 38 + Math.random() * 15,
+                        y: targetY - 11 - (i % 2) * 6,
+                        vy: 38 + Math.random() * 14,
                         dmg
                     });
                 }
@@ -2040,8 +2092,8 @@
                 const vR = rightVals[crossoverDemo.rightStage];
                 crossoverDemo.rightBalls.push({
                     x: halfW + halfW / 2,
-                    y: targetY - 22,
-                    vy: 52,
+                    y: targetY - 20,
+                    vy: 50,
                     dmg: vR
                 });
             }
@@ -2090,27 +2142,13 @@
             const curRN = stageNs[crossoverDemo.rightStage];
             const curRV = rightVals[crossoverDemo.rightStage];
 
-            pctx.font = '700 10.5px "JetBrains Mono", monospace';
+            pctx.font = '700 10px "JetBrains Mono", monospace';
             pctx.fillStyle = '#a3e635';
             pctx.textAlign = 'center';
-            pctx.fillText(`綠隊 2^(n-1)｜n=${curLN} 單波=${curLV}`, halfW / 2, 15);
+            pctx.fillText(`綠 2ⁿ⁻¹ (n=${curLN} 單波=${curLV})`, halfW / 2, 16);
 
             pctx.fillStyle = '#c084fc';
-            pctx.fillText(`紫隊 10n｜n=${curRN} 單波=${curRV}`, halfW + halfW / 2, 15);
-
-            if (curLV > curRV) {
-                pctx.fillStyle = '#fbbf24';
-                pctx.font = '700 9.5px "Inter", sans-serif';
-                pctx.fillText('🔥 綠隊單波已反超，加速狂追中！', halfW / 2, 28);
-            } else {
-                pctx.fillStyle = '#94a3b8';
-                pctx.font = '600 9.5px "Inter", sans-serif';
-                pctx.fillText('⏳ 綠隊前期落後，即將黃金交叉...', halfW / 2, 28);
-            }
-
-            pctx.fillStyle = '#94a3b8';
-            pctx.font = '600 9.5px "Inter", sans-serif';
-            pctx.fillText('✨ 紫隊前期領先，但成長較平緩', halfW + halfW / 2, 28);
+            pctx.fillText(`紫 10n (n=${curRN} 單波=${curRV})`, halfW + halfW / 2, 16);
 
             const drawSideStages = (isLeft, curIdx, curRem, balls, color, xOff) => {
                 const bw = halfW * 0.78;
@@ -2124,24 +2162,24 @@
 
                     pctx.fillStyle = '#1e2230';
                     pctx.beginPath();
-                    pctx.roundRect(bx, y, bw, 6, 3);
+                    pctx.roundRect(bx, y, bw, 5.5, 3);
                     pctx.fill();
 
                     pctx.fillStyle = color;
                     pctx.beginPath();
-                    pctx.roundRect(bx, y, Math.max(6, bw * ratio), 6, 3);
+                    pctx.roundRect(bx, y, Math.max(5.5, bw * ratio), 5.5, 3);
                     pctx.fill();
 
-                    pctx.font = '600 9px "JetBrains Mono", monospace';
+                    pctx.font = '600 8.5px "JetBrains Mono", monospace';
                     pctx.fillStyle = idx === curIdx ? '#f8fafc' : '#64748b';
                     pctx.textAlign = 'center';
-                    pctx.fillText(`第 ${stageNs[idx]} 關: ${Math.ceil(remV)} / ${maxV}`, xOff + halfW / 2, y + 16);
+                    pctx.fillText(`第${stageNs[idx]}關: ${Math.ceil(remV)}/${maxV}`, xOff + halfW / 2, y + 14);
                 }
 
                 pctx.fillStyle = color;
                 for (const b of balls) {
                     pctx.beginPath();
-                    pctx.arc(b.x, b.y, isLeft ? 2.4 : 4.0, 0, Math.PI * 2);
+                    pctx.arc(b.x, b.y, isLeft ? 2.3 : 3.8, 0, Math.PI * 2);
                     pctx.fill();
                 }
             };
@@ -2149,13 +2187,13 @@
             drawSideStages(true, crossoverDemo.leftStage, crossoverDemo.leftRem, crossoverDemo.leftBalls, '#a3e635', 0);
             drawSideStages(false, crossoverDemo.rightStage, crossoverDemo.rightRem, crossoverDemo.rightBalls, '#c084fc', halfW);
 
-            const bannerY = h - 22;
+            const bannerY = h - 18;
             pctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
-            pctx.fillRect(0, bannerY, w, 22);
+            pctx.fillRect(0, bannerY, w, 18);
             pctx.fillStyle = '#fbbf24';
-            pctx.font = '700 10px "Inter", sans-serif';
+            pctx.font = '700 9.5px "Inter", sans-serif';
             pctx.textAlign = 'center';
-            pctx.fillText('❓ 局部示範於終點前重播：請在下方選擇模式親自驗證誰會獲勝！', w / 2, bannerY + 14);
+            pctx.fillText('❓ 終點前暫停重播：點選下方模式親自揭曉誰贏！', w / 2, bannerY + 12);
         }
 
         function drawMechanismComparisonCanvases(dt) {
@@ -2168,18 +2206,18 @@
             mechDemo.videoLeftClock += dt;
             if (mechDemo.videoLeftClock >= 0.48) {
                 mechDemo.videoLeftClock = 0;
-                for (let i = 0; i < 20; i++) {
+                for (let i = 0; i < 18; i++) {
                     mechDemo.videoLeftBalls.push({
                         rx: 0.12 + Math.random() * 0.76,
-                        y: 36 + (i % 2) * 8 + (Math.random() - 0.5) * 3,
-                        vy: 42 + Math.random() * 18
+                        y: 28 + (i % 2) * 7 + (Math.random() - 0.5) * 2,
+                        vy: 40 + Math.random() * 16
                     });
                 }
             }
             mechDemo.videoRightClock += dt;
             if (mechDemo.videoRightClock >= 0.75) {
                 mechDemo.videoRightClock = 0;
-                mechDemo.videoRightBalls.push({ rx: 0.5, y: 14, vy: 62 });
+                mechDemo.videoRightBalls.push({ rx: 0.5, y: 10, vy: 56 });
             }
 
             mechDemo.mathSyncClock += dt;
@@ -2188,14 +2226,14 @@
                 mechDemo.mathSyncClock = 0;
                 mechDemo.mathWaveCount = (mechDemo.mathWaveCount % 9) + 1;
                 mechDemo.pulseAlpha = 1;
-                for (let i = 0; i < 16; i++) {
+                for (let i = 0; i < 14; i++) {
                     mechDemo.mathLeftBalls.push({
-                        rx: 0.14 + (i / 15) * 0.72,
-                        y: 22 + (i % 2) * 6,
-                        vy: 64
+                        rx: 0.14 + (i / 13) * 0.72,
+                        y: 18 + (i % 2) * 5,
+                        vy: 58
                     });
                 }
-                mechDemo.mathRightBalls.push({ rx: 0.5, y: 22, vy: 64 });
+                mechDemo.mathRightBalls.push({ rx: 0.5, y: 18, vy: 58 });
             }
 
             const renderMechCanvas = (canvasEl, leftBalls, rightBalls, isSyncMode) => {
@@ -2212,7 +2250,7 @@
                 const w = rect.width;
                 const h = rect.height;
                 const halfW = w / 2;
-                const targetY = h - 20;
+                const targetY = h - 16;
 
                 mctx.clearRect(0, 0, w, h);
                 mctx.strokeStyle = '#1e293b';
@@ -2224,12 +2262,12 @@
                 const bw = halfW * 0.76;
                 mctx.fillStyle = '#a3e635';
                 mctx.beginPath();
-                mctx.roundRect((halfW - bw) / 2, targetY, bw, 5, 2.5);
+                mctx.roundRect((halfW - bw) / 2, targetY, bw, 4.5, 2);
                 mctx.fill();
 
                 mctx.fillStyle = '#c084fc';
                 mctx.beginPath();
-                mctx.roundRect(halfW + (halfW - bw) / 2, targetY, bw, 5, 2.5);
+                mctx.roundRect(halfW + (halfW - bw) / 2, targetY, bw, 4.5, 2);
                 mctx.fill();
 
                 mctx.fillStyle = '#a3e635';
@@ -2241,7 +2279,7 @@
                         continue;
                     }
                     mctx.beginPath();
-                    mctx.arc(b.rx * halfW, b.y, 2.3, 0, Math.PI * 2);
+                    mctx.arc(b.rx * halfW, b.y, 2.1, 0, Math.PI * 2);
                     mctx.fill();
                 }
 
@@ -2254,25 +2292,25 @@
                         continue;
                     }
                     mctx.beginPath();
-                    mctx.arc(halfW + b.rx * halfW, b.y, 3.8, 0, Math.PI * 2);
+                    mctx.arc(halfW + b.rx * halfW, b.y, 3.5, 0, Math.PI * 2);
                     mctx.fill();
                 }
 
-                mctx.font = '600 9.5px "JetBrains Mono", monospace';
+                mctx.font = '600 9px "JetBrains Mono", monospace';
                 mctx.textAlign = 'center';
                 if (isSyncMode) {
                     if (mechDemo.pulseAlpha > 0.05) {
                         mctx.fillStyle = `rgba(251, 191, 36, ${mechDemo.pulseAlpha})`;
-                        mctx.fillText(`🔔 同步發射第 ${mechDemo.mathWaveCount} 波！`, halfW, 13);
+                        mctx.fillText(`🔔 同步第 ${mechDemo.mathWaveCount} 波`, halfW, 11);
                     }
                     mctx.fillStyle = '#cbd5e1';
-                    mctx.fillText('左方第 k 波', halfW / 2, h - 4);
-                    mctx.fillText('右方第 k 波 (1:1 同步)', halfW + halfW / 2, h - 4);
+                    mctx.fillText('左第 k 波', halfW / 2, h - 3);
+                    mctx.fillText('右第 k 波 (同步)', halfW + halfW / 2, h - 3);
                 } else {
                     mctx.fillStyle = '#a3e635';
-                    mctx.fillText('雙層密集貼近目標', halfW / 2, h - 4);
+                    mctx.fillText('近距密集連擊', halfW / 2, h - 3);
                     mctx.fillStyle = '#c084fc';
-                    mctx.fillText('高處單球落下', halfW + halfW / 2, h - 4);
+                    mctx.fillText('高處單球落下', halfW + halfW / 2, h - 3);
                 }
             };
 
@@ -2310,11 +2348,11 @@
                         const winnerTrack = leftTrack.isWinner ? leftTrack : rightTrack;
                         if (winnerTrack.balls.length === 0 && winnerTrack.particles.length === 0) {
                             pauseSimulation();
-                            // 若正在錄影，多錄 0.8 秒的 WINNER 畫面後自動停止並下載檔案
                             if (videoExporter.isRecording) {
+                                videoExporter.renderCompositeFrame();
                                 setTimeout(() => {
                                     if (videoExporter.isRecording) videoExporter.stopRecording();
-                                }, 800);
+                                }, 600);
                             }
                             break;
                         }
@@ -2336,7 +2374,6 @@
             drawTrackOnContext(ctx, leftTrack, 0, halfW, 0, height);
             drawTrackOnContext(ctx, rightTrack, halfW, halfW, 0, height);
 
-            // 若正在錄製影片，同步將當前畫面繪製到 720x1280 合成畫布
             if (videoExporter.isRecording) {
                 videoExporter.renderCompositeFrame();
             }
@@ -2345,7 +2382,7 @@
         }
 
         /**************************************************************************
-         * 10. UI 互動、手機全螢幕自適應與匯出影片控制
+         * 10. UI 互動與事件綁定
          **************************************************************************/
         function startSimulation() {
             sound.init();
@@ -2418,7 +2455,7 @@
                         const diffDesc = vL === vR
                             ? '⚡ 雙方單波平手！'
                             : (vL > vR ? `左方單波領先 (+${(vL - vR).toLocaleString()})` : `右方單波領先 (+${(vR - vL).toLocaleString()})`);
-                        stageCompareText = `當關目標 ${stageMax.toLocaleString()} ｜ ${diffDesc} （所需波數已隱藏）`;
+                        stageCompareText = `當關目標 ${stageMax.toLocaleString()} ｜ ${diffDesc} （波數已隱藏）`;
                     }
                 } else {
                     stageCompareText = vL === vR
@@ -2452,7 +2489,6 @@
             buildComparisonTable(parseMilestonesInput());
         });
 
-        // 手機版展開/收合次級控制列
         document.getElementById('btnMobileDrawerToggle').addEventListener('click', () => {
             const row = document.getElementById('secondaryControlsRow');
             const icon = document.getElementById('iconMobileDrawer');
@@ -2469,7 +2505,6 @@
             setTimeout(resizeCanvas, 30);
         });
 
-        // 切換「橫式雙欄寬螢幕」與「直式 9:16 原影片比例」
         document.getElementById('btnAspectToggle').addEventListener('click', () => {
             isPortraitMode = !isPortraitMode;
             const wrapper = document.getElementById('stageWrapper');
@@ -2490,7 +2525,6 @@
             setTimeout(resizeCanvas, 50);
         });
 
-        // 全螢幕播放控制 (進入全螢幕時自動隱藏最頂部標題列與次級選單，將畫面最大化給賽道動畫)
         document.getElementById('btnFullscreen').addEventListener('click', () => {
             const root = document.documentElement;
             if (!document.fullscreenElement) {
@@ -2510,7 +2544,6 @@
                 : 'ph-bold ph-corners-out text-sm';
             document.getElementById('textFullscreen').textContent = isFs ? '退出全螢幕' : '全螢幕';
 
-            // 在手機或小高度螢幕進入全螢幕時，自動隱藏頂部導覽列以釋放最大空間給動畫
             if (isFs && window.innerWidth < 1024) {
                 topHeader.classList.add('hidden');
                 secRow.classList.add('hidden');
@@ -2521,7 +2554,7 @@
             setTimeout(resizeCanvas, 80);
         });
 
-        // 錄製並匯出影片按鈕控制
+        // 錄製與匯出影片控制 (同步執行，不加 setTimeout 以確保手機權限通過)
         document.getElementById('btnOpenExportModal').addEventListener('click', () => {
             if (videoExporter.isRecording) {
                 videoExporter.stopRecording();
@@ -2554,18 +2587,37 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
 
+            // 同步重置並立即在點擊事件內啟動錄影與模擬
             resetSimulation();
-            setTimeout(() => {
-                videoExporter.startRecording();
+            const ok = videoExporter.startRecordingSync();
+            if (ok) {
                 startSimulation();
-            }, 80);
+            }
         });
 
         document.getElementById('btnStopRecordingNow').addEventListener('click', () => {
             videoExporter.stopRecording();
         });
 
-        // 綁定控制按鈕
+        // 關閉預覽視窗與手機原生分享按鈕
+        document.getElementById('btnCloseResultModal').addEventListener('click', () => {
+            const videoEl = document.getElementById('recordedVideoPreview');
+            videoEl.pause();
+            const modal = document.getElementById('videoResultModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        document.getElementById('btnShareVideoMobile').addEventListener('click', async () => {
+            if (!videoExporter.lastFile) return;
+            try {
+                await navigator.share({
+                    title: '函數競賽：誰會先抵達終點？',
+                    files: [videoExporter.lastFile]
+                });
+            } catch (err) {}
+        });
+
         document.getElementById('btnPlayPause').addEventListener('click', () => {
             if (isRunning) pauseSimulation();
             else startSimulation();
@@ -2593,7 +2645,6 @@
             document.getElementById('speedValue').textContent = simSpeed.toFixed(1) + 'x';
         });
 
-        // 彈窗開關綁定
         function bindModal(btnOpenId, btnCloseId, modalId) {
             const modal = document.getElementById(modalId);
             document.getElementById(btnOpenId).addEventListener('click', () => {
